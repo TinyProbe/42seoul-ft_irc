@@ -1,0 +1,10 @@
+ircserv
+build
+tmp*
+test*
+*.sh
+*.o
+*.swp
+*.un
+*.dSYM
+.DS_STORE
