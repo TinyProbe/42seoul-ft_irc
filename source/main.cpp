@@ -1,3 +1,6 @@
 #include "Program.h"
 
-int main() { irc::Program::run(); }
+int main(int argc, char **argv) {
+  irc::Program::init(argc, argv);
+  irc::Program::run();
+}

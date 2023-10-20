@@ -82,6 +82,7 @@ endif
 ##################################
 # include/...
 INC_LST = common.h \
+					type.h \
 					Program.h \
 
 # source/...
