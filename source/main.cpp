@@ -1,6 +1,14 @@
+#include <iostream>
+#include <stdexcept>
+
 #include "Program.h"
 
 int main(int argc, char **argv) {
-  irc::Program::init(argc, argv);
-  irc::Program::run();
+  try {
+    irc::Program().run(argc, argv);
+    return EXIT_SUCCESS;
+  } catch (std::exception const &e) {
+    std::cerr << e.what() << std::endl;
+    return EXIT_FAILURE;
+  }
 }
