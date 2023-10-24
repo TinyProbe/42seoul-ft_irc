@@ -1,13 +1,5 @@
 # include "Server.hpp"
 
-void Server::setPort(int port) {
-	port_ = port;
-}
-
-void Server::setPassword(std::string Password) {
-	password_ = Password;
-}
-
 void Server::standby(void) {
 	int Server_socket;
 	struct sockaddr_in server_addr;
@@ -28,10 +20,6 @@ void Server::standby(void) {
 	server_socket_ = Server_socket;
 }
 
-int Server::getSocket(void) const {
-	return server_socket_;
-}
-
 void Server::preProcess(void) {
 
 }
@@ -50,12 +38,4 @@ int Server::accept(void) {
 	fcntl(socket, F_SETFL, O_NONBLOCK);
 	connections_[socket];
 	return socket;
-}
-
-Connections &Server::getConnections(void) const {
-	return connections_;
-}
-
-Client &Server::getClient(int socket) const {
-	return connections_[socket];
 }
