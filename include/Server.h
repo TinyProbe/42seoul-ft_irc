@@ -7,7 +7,7 @@
 namespace irc {
 
 using Connections = std::unordered_map<int, Client>;
-using Nicktoctl = std::unordered_map<string, int>;
+using NickToSocket = std::unordered_map<string, int>;
 
 class Server {
  public:
@@ -21,15 +21,15 @@ class Server {
   void preProcess(void);
   void disconnect(int socket);
   int accept(void);
-  Connections &getConnections(void);
-  Client &getClient(int socket);
+  Connections &getConnections(void) const;
+  Client &getClient(int socket) const;
 
  private:
   int port_number_;
   int server_socket_;
   std::string password_;
   Connections connections_;
-  Nicktoctl nicktoctl_
+  NickToSocket nick_to_socket_;
 };
 
 } // namespace irc
