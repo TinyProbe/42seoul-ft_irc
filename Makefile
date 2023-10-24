@@ -82,9 +82,11 @@ endif
 ##################################
 # include/...
 INC_LST = Program.h \
+					EventPool.h \
 
 # source/...
 SRC_LST = Program.cpp \
+					EventPool.cpp \
 					main.cpp \
 
 INC = $(addprefix include/,$(INC_LST))
