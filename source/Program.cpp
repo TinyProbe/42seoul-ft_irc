@@ -27,7 +27,7 @@ void Program::init(int argc, char **argv) {
   server_.setPassword(std::string(argv[2]));
   server_.standby();
 
-  events_.changeEvent(server_.getSocket(), EVFILT_READ, EV_ADD | EV_ENABLE);
+  events_.changeEvent(server_.getSocket(), EVFILT_READ, EV_ADD);
 }
 
 void Program::loop() {
@@ -48,7 +48,6 @@ void Program::request(struct kevent const &ev) {
       throw std::runtime_error(std::string("server: ") +
                                std::string(strerror(errno)));
     } else {
-      close(ev.ident);
       server_.disconnect(ev.ident);
       std::cerr << std::string("client: ") +
                    std::string(strerror(errno)) << std::endl;
@@ -59,8 +58,8 @@ void Program::request(struct kevent const &ev) {
   if (static_cast<int>(ev.ident) == server_.getSocket()) {
     if (ev.filter == EVFILT_READ) {
       int socket = server_.accept();
-      events_.changeEvent(socket, EVFILT_READ, EV_ADD | EV_ENABLE);
-      events_.changeEvent(socket, EVFILT_WRITE, EV_ADD | EV_ENABLE);
+      events_.changeEvent(socket, EVFILT_READ, EV_ADD);
+      events_.changeEvent(socket, EVFILT_WRITE, EV_ADD);
     }
   } else {
     Client &client = server_.getClient(ev.ident);
