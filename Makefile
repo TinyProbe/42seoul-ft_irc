@@ -83,10 +83,14 @@ endif
 # include/...
 INC_LST = Program.h \
 					EventPool.h \
+					RequestPool.h \
+					ResponsePool.h \
 
 # source/...
 SRC_LST = Program.cpp \
 					EventPool.cpp \
+					RequestPool.cpp \
+					ResponsePool.cpp \
 					main.cpp \
 
 INC = $(addprefix include/,$(INC_LST))
