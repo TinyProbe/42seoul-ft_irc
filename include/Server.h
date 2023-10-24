@@ -1,35 +1,37 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef IRCSERV_SERVER_H_
+#define IRCSERV_SERVER_H_
 
 #include "Client.h"
-#define MAX_BACKLOG 128  
+#define MAX_BACKLOG 128
+
+namespace irc {
+
 using Connections = std::unordered_map<int, Client>;
 using Nicktoctl = std::unordered_map<string, int>;
-
-namespace irc{
 
 class Server {
  public:
   Server() {}
   ~Server() {}
-  void	setPort(int port);
-  void	setPassword(std::string Passowrd);
-  void  standby(void);
-  int		getSocket(void);
-  void	preProcess(void);
-  void	disconnect(int fd);
-  int		accept(void);
-  Connections getConnections(void);
-  Client getClient(void);
 
-  private:
-	int port_number_;
-	int server_socket_;
-	std::string password_;
+  void setPort(int port);
+  void setPassword(std::string Passowrd);
+  void standby(void);
+  int getSocket(void) const;
+  void preProcess(void);
+  void disconnect(int socket);
+  int accept(void);
+  Connections &getConnections(void);
+  Client &getClient(int socket);
+
+ private:
+  int port_number_;
+  int server_socket_;
+  std::string password_;
   Connections connections_;
   Nicktoctl nicktoctl_
 };
 
-}
+} // namespace irc
 
-#endif
+#endif // IRCSERV_SERVER_H_
