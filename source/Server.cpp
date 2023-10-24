@@ -1,14 +1,14 @@
 # include "Server.hpp"
 
-void	Server::setPort(int port) {
-	port_number_ = port;
+void Server::setPort(int port) {
+	port_ = port;
 }
 
-void	Server::setPassword(std::string Password) {
+void Server::setPassword(std::string Password) {
 	password_ = Password;
 }
 
-void	Server::standby(void) {
+void Server::standby(void) {
 	int Server_socket;
 	struct sockaddr_in server_addr;
 	int flag = 1;
@@ -32,11 +32,11 @@ int	Server::getSocket(void) const {
 	return server_socket_;
 }
 
-void preProcess(void) {
+void Server::preProcess(void) {
 
 }
 
-void	Server::disconnect(int socket) {
+void Server::disconnect(int socket) {
 	nick_to_socket_.erase(connections_[socket].getNickname());
 	connections_.erase(socket);
 }
