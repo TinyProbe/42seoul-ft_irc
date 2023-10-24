@@ -28,7 +28,7 @@ void Server::standby(void) {
 	server_socket_ = Server_socket;
 }
 
-int	Server::getSocket(void) const {
+int Server::getSocket(void) const {
 	return server_socket_;
 }
 
@@ -39,6 +39,7 @@ void Server::preProcess(void) {
 void Server::disconnect(int socket) {
 	nick_to_socket_.erase(connections_[socket].getNickname());
 	connections_.erase(socket);
+	close (socket);
 }
 
 int Server::accept(void) {
