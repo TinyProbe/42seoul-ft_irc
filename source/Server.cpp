@@ -37,31 +37,24 @@ void preProcess(void) {
 }
 
 void	Server::disconnect(int socket) {
-	Nicktoctl::iterator it;
-
-	for (it = nicktoctl_.begin(); it != nicktoctl_.end(); it++){
-		if (it->second == socket){
-			nicktoctl_.earse(it->first);
-			break ;
-		}
-	}
-	connections_.earse(socket);
+	nick_to_socket_.erase(connections_[socket].getNickname());
+	connections_.erase(socket);
 }
 
 int Server::accept(void) {
-	int clt_sockfd = accept(serv_sockfd, NULL, NULL);
-	if (clt_sockfd == -1) {
+	int socket = accept(server_socket_, NULL, NULL);
+	if (socket == -1) {
 			throw std::runtime_error(std::string("accept() error\n") + std::string(strerror(errno)));
 	}
-	fcntl(clt_sockfd, F_SETFL, O_NONBLOCK);
-	connections_[clt_sockfd];
-	return clt_sockfd;
+	fcntl(socket, F_SETFL, O_NONBLOCK);
+	connections_[socket];
+	return socket;
 }
 
-Connections &Server::getConnections(void) {
+Connections &Server::getConnections(void) const {
 	return connections_;
 }
 
-Client &Server::getClient(int socket) {
+Client &Server::getClient(int socket) const {
 	return connections_[socket];
 }
