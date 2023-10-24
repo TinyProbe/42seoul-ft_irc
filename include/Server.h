@@ -7,7 +7,7 @@
 namespace irc {
 
 using Connections = std::unordered_map<int, Client>;
-using NickToSocket = std::unordered_map<string, int>;
+using NickToSocket = std::unordered_map<std::string, int>;
 
 class Server {
  public:
@@ -25,7 +25,7 @@ class Server {
   Client &getClient(int socket) const;
 
  private:
-  int port_number_;
+  int port_;
   int server_socket_;
   std::string password_;
   Connections connections_;
