@@ -44,7 +44,7 @@ ifeq ($(ARG.RELEASE),1)
   CONFIG    = release
 else ifeq ($(ARG.DEBUG),1)
   # debug에 특화된 설정을 한다.
-  CXXFLAGS += -g3 -D_DEBUG_
+  CXXFLAGS += -g2 -D_DEBUG_
   CONFIG    = debug
 endif
 
@@ -81,13 +81,11 @@ endif
 
 ##################################
 # include/...
-INC_LST = common.h \
-					type.h \
-					Program.h \
+INC_LST = Program.h \
 
 # source/...
-SRC_LST = main.cpp \
-					Program.cpp \
+SRC_LST = Program.cpp \
+					main.cpp \
 
 INC = $(addprefix include/,$(INC_LST))
 OBJ = $(addprefix $(BUILD_DIR)/,$(SRC_LST:.cpp=.o))

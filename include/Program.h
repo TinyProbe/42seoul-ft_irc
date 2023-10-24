@@ -5,16 +5,21 @@ namespace irc {
 
 class Program {
  public:
-  static void init(int argc, char **argv);
-  static void run();
+  Program() {}
+  ~Program() {}
+
+  void run(int argc, char **argv);
 
  private:
-  explicit Program();
-  explicit Program(Program const &rhs);
+  void init(int argc, char **argv);
+  void loop();
+  void request(struct kevent const &ev);
+  void response(Request const &req);
 
-  static int argc_;
-  static char **argv_;
-}; // Program
+  Server      server_;
+  EventPool   events_;
+  RequestPool requests_;
+};
 
 } // namespace irc
 
