@@ -14,12 +14,9 @@ void Client::receive(int socket) {
 }
 
 bool Client::canRequest() const {
-	if (!receive_.find("\r\n"))
-		return false;
-	if (nickname_.empty() || usrname_empty())
-		certification(receive);
-	if (nickname_.empty() || usrname_empty())
-		return false;
+	if (!receive_.find("\r\n")) { return false; }
+	if (nickname_.empty() || usrname_empty()) { certification(receive); }
+	if (nickname_.empty() || usrname_empty()) { return false; }
 	return ture;
 }
 
@@ -35,6 +32,6 @@ bool Client::canWrite() {
 	return write_;
 }
 
-void Client::certification(std::string receive){
+void Client::certification(std::string receive) {
 
 }

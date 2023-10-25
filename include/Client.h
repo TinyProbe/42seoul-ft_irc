@@ -7,12 +7,7 @@ namespace irc {
 
 class Client {
  public:
-  Client() {
-    nikcname_.clear();
-    usrname_.clear();
-    receive_.clear();
-    write(false);
-  }
+  Client() write_(false) {}
   ~Client() {}
 
   std::string &getNickname() const;
@@ -22,11 +17,12 @@ class Client {
   void setWrite(bool value);
 
  private:
-	std::string nickname_;
-	std::string usrname_;
-	bool write_;
-    std::string receive_;
-    void certification(std::string receive);
+  void certification(std::string receive);
+
+  std::string nickname_;
+  std::string usrname_;
+  bool write_;
+  std::string receive_;
 };
 
 } // namespace irc
