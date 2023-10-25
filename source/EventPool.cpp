@@ -8,7 +8,7 @@ void EventPool::changeEvent(int ident, int filter, int flags) {
                              std::string(strerror(errno)));
   }
   if (flags & EV_ADD) {
-    new_events_.resize(static_cast<int>(new_events_.size()) + 2);
+    new_events_.resize(std::min(new_events_.size() + 2u, 1u << 30));
   } else if (flags & EV_DELETE) {
     new_events_.resize(std::max(static_cast<int>(new_events_.size()) - 2, 0));
   }
@@ -18,12 +18,13 @@ bool EventPool::pollEvent(struct kevent &ev) {
   static int len;
   if (len == 0) {
     len = kevent(kqueue_, NULL, 0, &new_events_[0], new_events_.size(), NULL);
-    if (len == -1) {
+    if (len == 0) {
+      return false;
+    } else if (len == -1) {
       throw std::runtime_error(std::string("kevent: ") +
                                std::string(strerror(errno)));
     }
   }
-  if (len != 0) {
-    memcpy(&ev, (&new_events_[0]) + --len, sizeof(ev));
-  }
+  memcpy(&ev, &new_events_[--len], sizeof(struct kevent));
+  return true;
 }
