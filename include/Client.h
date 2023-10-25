@@ -1,14 +1,21 @@
 #ifndef IRCSERV_CLIENT_H_
 #define IRCSERV_CLIENT_H_
 
+#define MAX_BACKLOG 1024
+
 namespace irc {
 
 class Client {
  public:
-  Client() {}
+  Client() {
+    nikcname_.clear();
+    usrname_.clear();
+    receive_.clear();
+    write(false);
+  }
   ~Client() {}
 
-  std::string &getNickname(void) const;
+  std::string &getNickname() const;
   void receive(int socket);
   bool canRequest() const ; 
   Request createRequest();
@@ -16,9 +23,10 @@ class Client {
 
  private:
 	std::string nickname_;
-	std::string id_;
-	std::string realname_;
-	bool write;
+	std::string usrname_;
+	bool write_;
+    std::string receive_;
+    void certification(std::string receive);
 };
 
 } // namespace irc
