@@ -7,7 +7,7 @@ namespace irc {
 
 class Client {
  public:
-  Client() write_(false) {}
+  Client() : write_(false) {}
   ~Client() {}
 
   std::string &getNickname() const;
