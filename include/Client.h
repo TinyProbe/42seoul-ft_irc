@@ -15,6 +15,7 @@ class Client {
   bool canRequest() const ; 
   Request createRequest();
   void setWrite(bool value);
+  bool canWrite() const ;
 
  private:
   void certification(std::string receive);
