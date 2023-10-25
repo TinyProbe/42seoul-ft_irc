@@ -14,12 +14,11 @@ class Server {
   Server() {}
   ~Server() {}
 
-  void setPort(int port) { prot_ = port; }
-  void setPassword(std::string password) { password_ = password; }
-  int getSocket(void) const { return server_socket_; }
-  Connections &getConnections(void) const { return connections_; }
-  Client &getClient(int socket) const { return connections_[socket]; }
-  
+  void setPort(std::string port);
+  void setPassword(std::string password);
+  int getSocket(void) const;
+  Connections &getConnections(void) const;
+  Client &getClient(int socket) const;
   void standby(void);
   void preProcess(void);
   void disconnect(int socket);

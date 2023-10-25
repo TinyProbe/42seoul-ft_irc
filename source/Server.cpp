@@ -1,5 +1,43 @@
 # include "Server.hpp"
 
+void Server::setPort(std::string port) {
+	int port_num = 0;
+	int size;
+
+	for (size = 0; size < port.size(); size++) {
+		if (port.size() > 5 || !isdigit(port[size]))
+			break ;
+		port_num = port_num * 10 + static_cast<int>(port[size]) - 48;
+	}
+	if (size != port.size() || port_num > 65535)
+		throw std::runtime_error(std::string("port error\n"));
+	port_ = port_num;
+}
+
+void Server::setPassword(std::string password) {
+	int size;
+
+	for (size = 0; size < password.size(); size++) {
+		if (!isprint(password[i]))
+			break ;
+	}
+	if (size != password.size())
+		throw std::runtime_error(std::string("password error\n"));
+	password_ = password;
+}
+
+int Server::getSocket(void) const {
+	return server_socket_;
+}
+
+Connections &Server::getConnections(void) const {
+	return connections_;
+}
+
+Client &Server::getClient (int socket) const {
+	return connections_[socket];
+}
+
 void Server::standby(void) {
 	int Server_socket;
 	struct sockaddr_in server_addr;
