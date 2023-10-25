@@ -16,13 +16,13 @@ class Server {
 
   void setPort(std::string port);
   void setPassword(std::string password);
-  int getSocket(void) const;
-  Connections &getConnections(void) const;
+  int getSocket() const;
+  Connections &getConnections() const;
   Client &getClient(int socket) const;
-  void standby(void);
-  void preProcess(void);
+  void standby();
+  void preProcess();
   void disconnect(int socket);
-  int accept(void);
+  int accept();
 
  private:
   int port_;
