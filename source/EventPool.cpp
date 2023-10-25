@@ -8,7 +8,7 @@ void EventPool::changeEvent(int ident, int filter, int flags) {
                              std::string(strerror(errno)));
   }
   if (flags & EV_ADD) {
-    new_events_.resize(std::min(new_events_.size() + 2u, 1u << 30));
+    new_events_.resize(std::min(new_events_.size() + 2ul, 1ul << 30));
   } else if (flags & EV_DELETE) {
     new_events_.resize(std::max(static_cast<int>(new_events_.size()) - 2, 0));
   }
