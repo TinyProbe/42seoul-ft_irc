@@ -8,6 +8,17 @@ class Channel {
   Channel() {}
   ~Channel() {}
 
+  bool check_ban(std::string nick);
+  void input_op(std::string nick);
+  void output_op(std::string nick);
+  void input_ch(std::string nick);
+  void output_ch(std::string nick);
+  void input_ban(std::string nick);
+  void output_ban(std::string nick);
+  std::string getTopic() const;
+  void setTopic(std::string topic);
+  std::string getPassword() const;
+
  private:
   std::vector<std::string> op_nick_;
   std::vector<std::string> ch_nick_;
