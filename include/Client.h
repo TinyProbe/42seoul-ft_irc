@@ -24,6 +24,7 @@ class Client {
   std::string usrname_;
   bool write_;
   std::string receive_;
+  std::string pasword_;
 };
 
 } // namespace irc

@@ -36,5 +36,18 @@ bool Client::canWrite() const {
 }
 
 void Client::certification(std::string receive) {
+  char *word = strtok(receive.c_str(), " ");
 
+  if (!strcmp(word, "PASS")){
+    word = strtok(NULL, " ");
+    password_ = word;
+  }
+   if (!strcmp(word, "NICK")){
+    word = strtok(NULL, " ");
+    nickname_ = word;
+  }
+   if (!strcmp(word, "USER")){
+    word = strtok(NULL, " ");
+    usrname_ = word;
+  }
 }
