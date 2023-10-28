@@ -2,7 +2,6 @@
 #define IRCSERV_SERVER_H_
 
 #include "Client.h"
-#define MAX_BACKLOG 128
 
 namespace irc {
 
@@ -11,25 +10,29 @@ using NickToSocket = std::unordered_map<std::string, int>;
 
 class Server {
  public:
-  Server() {}
+  Server() : port_(-1), serv_sock_(-1) {}
   ~Server() {}
 
-  void setPort(std::string port);
-  void setPassword(std::string password);
-  int getSocket(void) const;
-  Connections &getConnections(void) const;
+  int getSocket() const;
+  Connections &getConnections() const;
   Client &getClient(int socket) const;
-  void standby(void);
-  void preProcess(void);
+  Client &getClient(std::string const &nick) const;
+  void setPort(int port);
+  void setPassword(std::string const &password);
+  bool verify(std::string const &password) const;
+
+  void standby();
+  void preProcess();
   void disconnect(int socket);
-  int accept(void);
+  void disconnect(std::string const &nick);
+  int accept();
 
  private:
   int port_;
-  int server_socket_;
+  int serv_sock_;
   std::string password_;
   Connections connections_;
-  NickToSocket nick_to_socket_;
+  NickToSocket nick_to_sock_;
 };
 
 } // namespace irc

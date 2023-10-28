@@ -76,12 +76,12 @@ void Program::request(struct kevent const &ev) {
 
 void Program::response(Request const &req) {
   int code = req.getRequestCode();
-  if (code == Request::RECOGNIZE) {
-  // } else if (code == Request::) {
-  // } else if (code == Request::) {
-  // } else if (code == Request::) {
-  // } else if (code == Request::) {
-  // } else if (code == Request::) {
+  if (code == Request::kAuthenticate) {
+  } else if (code == Request::) {
+  } else if (code == Request::) {
+  } else if (code == Request::) {
+  } else if (code == Request::) {
+  } else if (code == Request::) {
   }
 }
 

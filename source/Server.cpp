@@ -1,79 +1,131 @@
-# include "Server.hpp"
+#include "Server.hpp"
 
-void Server::setPort(std::string port) {
-	int port_num = 0;
-	int size;
+namespace irc {
 
-	for (size = 0; size < port.size(); size++) {
-		if (port.size() > 5 || !isdigit(port[size]))
-			break ;
-		port_num = port_num * 10 + static_cast<int>(port[size]) - 48;
-	}
-	if (size != port.size() || port_num > 65535)
-		throw std::runtime_error(std::string("port error\n"));
-	port_ = port_num;
+static int const kMaxBacklog = 128;
+
+int Server::getSocket() const {
+  return serv_sock_;
 }
 
-void Server::setPassword(std::string password) {
-	int size;
-
-	for (size = 0; size < password.size(); size++) {
-		if (!isprint(password[i]))
-			break ;
-	}
-	if (size != password.size())
-		throw std::runtime_error(std::string("password error\n"));
-	password_ = password;
+Connections &Server::getConnections() const {
+  return connections_;
 }
 
-int Server::getSocket(void) const {
-	return server_socket_;
+Client &Server::getClient(int socket) const {
+  Connections::iterator it = connections_.find(socket);
+  if (it == connections_.end()) {
+    throw std::runtime_error(std::string("getClient: invalid key"));
+  }
+  return it->second;
 }
 
-Connections &Server::getConnections(void) const {
-	return connections_;
+Client &Server::getClient(std::string const &nick) const {
+  NickToSock::iterator it = nick_to_sock_.find(nick);
+  if (it == nick_to_sock_.end()) {
+    throw std::runtime_error(std::string("getClient: invalid key"));
+  }
+  return it->second;
 }
 
-Client &Server::getClient (int socket) const {
-	return connections_[socket];
+void Server::setPort(int port) {
+  if (port < 0 || port > 65535) {
+    throw std::runtime_error(std::string("port: ") +
+                             std::string(strerror(errno)));
+  }
+  port_ = port;
 }
 
-void Server::standby(void) {
-	int Server_socket;
-	struct sockaddr_in server_addr;
-	int flag = 1;
-	
-	if ((Server_socket = socket(PF_INET, SOCK_STREAM, 0)) == -1)
-		throw std::runtime_error(std::string("socket() error\n") + std::string(strerror(errno)));
-	setsockopt(Server_socket, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)); //프로그램이 종료되어도 8080port가 해제되지 않는 현상 없애기 위해 필요
-	memset(&server_addr, 0, sizeof(server_addr));
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_addr.sin_port = htons(Port_number_);
-	if (bind(Server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
-		throw std::runtime_error(std::string("bind() error\n") + std::string(strerror(errno)));
-	if (listen(Server_socket, MAX_BACKLOG) == -1)
-		throw std::runtime_error(std::string("listen() error\n") + std::string(strerror(errno)));
-	fcntl(Server_socket, F_SETFL, O_NONBLOCK);
-	server_socket_ = Server_socket;
+void Server::setPassword(std::string const &password) {
+  if (password.size() < 6 || password.size() > 16) {
+    throw std::runtime_error(std::string("password: 6 <= password >= 16"));
+  }
+  for (int i = 0; i < password.size(); ++i) {
+    if (!isprint(password[i])) {
+      throw std::runtime_error(
+          std::string("password: format error(unprintable)"));
+    }
+  }
+  password_ = password;
 }
 
-void Server::preProcess(void) {
+bool Server::verify(std::string const &password) const {
+  return password_ == password;
+}
 
+void Server::standby() {
+  if (serv_sock_ != -1) { close(serv_sock_); }
+
+  if ((serv_sock_ = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+    throw std::runtime_error(std::string("socket: ") +
+                             std::string(strerror(errno));
+  }
+  fcntl(serv_sock_, F_SETFL, O_NONBLOCK);
+  // for port release when shutdown the server program
+  // setsockopt(serv_sock_, SOL_SOCKET, SO_REUSEADDR, { 1 }, sizeof(int));
+
+  struct sockaddr_in serv_addr;
+  bzero((void *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family      = AF_INET;
+  serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  serv_addr.sin_port        = htons(port_);
+
+  if (bind(serv_sock_,
+           (struct sockaddr *) &serv_addr,
+           sizeof(serv_addr)) == -1) {
+    throw std::runtime_error(std::string("bind: ") +
+                             std::string(strerror(errno));
+  }
+
+  if (listen(serv_sock_, kMaxBacklog) == -1) {
+    throw std::runtime_error(std::string("listen: ") +
+                             std::string(strerror(errno));
+  }
+}
+
+void Server::preProcess() {
+  static Connections::iterator i;
+  for (i = connections_.begin(); i != connections_.end(); ++i) {
+    i->second.setWrite(false);
+  }
 }
 
 void Server::disconnect(int socket) {
-	nick_to_socket_.erase(connections_[socket].getNickname());
-	connections_.erase(socket);
-	close (socket);
+  Connections::iterator it = connections_.find(socket);
+  if (it != connections_.end()) {
+    close(it->first);
+    nick_to_sock_.erase(it->second.getNickname());
+    connections_.erase(it);
+  }
 }
 
-int Server::accept(void) {
-	int socket = accept(server_socket_, NULL, NULL);
-	if (socket == -1) {
-			throw std::runtime_error(std::string("accept() error\n") + std::string(strerror(errno)));
-	}
-	fcntl(socket, F_SETFL, O_NONBLOCK);
-	connections_[socket];
-	return socket;
+void Server::disconnect(std::string const &nick) {
+  NickToSock::iterator it = nick_to_sock_.find(nick);
+  if (it != nick_to_sock_.end()) {
+    close(it->second);
+    connections_.erase(it->second);
+    nick_to_sock_.erase(it);
+  }
 }
+
+int Server::accept() {
+  int socket;
+  struct sockaddr_in serv_addr;
+  bzero((void *) &serv_addr, sizeof(serv_addr));
+  if ((socket = accept(serv_sock_,
+                       (struct sockaddr *) &serv_addr,
+                       sizeof(serv_addr))) == -1) {
+    if (errno == EWOULDBLOCK) {
+      std::cerr << std::string("accept: ") +
+                   std::string(strerror(errno) << std::endl;
+    } else {
+      throw std::runtime_error(std::string("accept: ") +
+                               std::string(strerror(errno)));
+    }
+  }
+  fcntl(socket, F_SETFL, O_NONBLOCK);
+  connections_[socket].setAddress(serv_addr.sin_addr.s_addr);
+  return socket;
+}
+
+} // namespace irc
