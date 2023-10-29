@@ -1,5 +1,7 @@
 #include "RequestPool.h"
 
+namespace irc {
+
 void RequestPool::push(Request const &req) {
   new_requests_.push(req);
 }
@@ -12,3 +14,5 @@ bool RequestPool::pollRequest(Request &req) {
   new_requests_.pop();
   return true;
 }
+
+} // namespace irc

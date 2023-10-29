@@ -5,13 +5,13 @@
 
 namespace irc {
 
-using Connections = std::unordered_map<int, Client>;
-using NickToSocket = std::unordered_map<std::string, int>;
+typedef std::unordered_map<int, Client> Connections;
+typedef std::unordered_map<std::string, int> NickToSock;
 
 class Server {
  public:
-  Server() : port_(-1), serv_sock_(-1) {}
-  ~Server() {}
+  Server() : serv_sock_(-1), port_(-1);
+  ~Server();
 
   int getSocket() const;
   Connections &getConnections() const;
@@ -22,17 +22,24 @@ class Server {
   bool verify(std::string const &password) const;
 
   void standby();
+  int accept();
   void preProcess();
   void disconnect(int socket);
   void disconnect(std::string const &nick);
-  int accept();
+
+  Response const &response(Request const &req);
+  bool perform(Response const &res);
 
  private:
-  int port_;
-  int serv_sock_;
+  int         serv_sock_;
+  int         port_;
   std::string password_;
+
   Connections connections_;
-  NickToSocket nick_to_sock_;
+  NickToSock  nick_to_sock_;
+
+  RequestCallbacks request_callbacks_;
+  ResponseCallbacks response_callbacks_;
 };
 
 } // namespace irc

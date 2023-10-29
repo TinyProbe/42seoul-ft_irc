@@ -1,5 +1,7 @@
 #include "ResponsePool.h"
 
+namespace irc {
+
 void ResponsePool::push(Response const &res) {
   new_responses_.push(res);
 }
@@ -12,3 +14,5 @@ bool ResponsePool::pollResponse(Response &res) {
   new_responses_.pop();
   return true;
 }
+
+} // namespace irc

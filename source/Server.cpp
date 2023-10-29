@@ -25,7 +25,7 @@ Client &Server::getClient(std::string const &nick) const {
   if (it == nick_to_sock_.end()) {
     throw std::runtime_error(std::string("getClient: invalid key"));
   }
-  return it->second;
+  return connections_[it->second];
 }
 
 void Server::setPort(int port) {
@@ -83,11 +83,32 @@ void Server::standby() {
   }
 }
 
+int Server::accept() {
+  int socket;
+  struct sockaddr_in serv_addr;
+  bzero((void *) &serv_addr, sizeof(serv_addr));
+  if ((socket = accept(serv_sock_,
+                       (struct sockaddr *) &serv_addr,
+                       sizeof(serv_addr))) == -1) {
+    if (errno == EWOULDBLOCK) {
+      std::cerr << std::string("accept: ") +
+                   std::string(strerror(errno) << std::endl;
+    } else {
+      throw std::runtime_error(std::string("accept: ") +
+                               std::string(strerror(errno)));
+    }
+  }
+  fcntl(socket, F_SETFL, O_NONBLOCK);
+  connections_[socket].setAddress(serv_addr.sin_addr.s_addr);
+  return socket;
+}
+
 void Server::preProcess() {
   static Connections::iterator i;
   for (i = connections_.begin(); i != connections_.end(); ++i) {
     i->second.setWrite(false);
   }
+  // timeout check
 }
 
 void Server::disconnect(int socket) {
@@ -108,24 +129,12 @@ void Server::disconnect(std::string const &nick) {
   }
 }
 
-int Server::accept() {
-  int socket;
-  struct sockaddr_in serv_addr;
-  bzero((void *) &serv_addr, sizeof(serv_addr));
-  if ((socket = accept(serv_sock_,
-                       (struct sockaddr *) &serv_addr,
-                       sizeof(serv_addr))) == -1) {
-    if (errno == EWOULDBLOCK) {
-      std::cerr << std::string("accept: ") +
-                   std::string(strerror(errno) << std::endl;
-    } else {
-      throw std::runtime_error(std::string("accept: ") +
-                               std::string(strerror(errno)));
-    }
-  }
-  fcntl(socket, F_SETFL, O_NONBLOCK);
-  connections_[socket].setAddress(serv_addr.sin_addr.s_addr);
-  return socket;
+Response const &Server::response(Request const &req) {
+  return request_callbacks_(req);
+}
+
+bool Server::perform(Response const &res) {
+  return response_callbacks_(res);
 }
 
 } // namespace irc

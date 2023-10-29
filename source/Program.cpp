@@ -28,17 +28,23 @@ void Program::init(int argc, char **argv) {
   server_.standby();
 
   events_.changeEvent(server_.getSocket(), EVFILT_READ, EV_ADD);
+  events_.setSize(events_.getSize() + 1);
 }
 
 void Program::loop() {
   struct kevent ev;
   Request req;
   Response res;
+  int size;
   while (true) {
     server_.preProcess(); // setWrite(false), recognize timeout check
     while (events_.pollEvent(ev)) { request(ev); }
     while (requests_.pollRequest(req)) { response(req); }
-    while (responses_.pollResponse(res)) { perform(res); }
+    size = responses_.getSize();
+    while (size--) {
+      responses_.pollResponse(res);
+      perform(res);
+    }
   }
 }
 
@@ -60,6 +66,7 @@ void Program::request(struct kevent const &ev) {
       int socket = server_.accept();
       events_.changeEvent(socket, EVFILT_READ, EV_ADD);
       events_.changeEvent(socket, EVFILT_WRITE, EV_ADD);
+      events_.setSize(events_.getSize() + 2);
     }
   } else {
     Client &client = server_.getClient(ev.ident);
@@ -75,17 +82,13 @@ void Program::request(struct kevent const &ev) {
 }
 
 void Program::response(Request const &req) {
-  int code = req.getRequestCode();
-  if (code == Request::kAuthenticate) {
-  } else if (code == Request::) {
-  } else if (code == Request::) {
-  } else if (code == Request::) {
-  } else if (code == Request::) {
-  } else if (code == Request::) {
-  }
+  responses_.push(server_.response(req));
 }
 
 void Program::perform(Response const &res) {
+  if (!server_.perform(res)) {
+    responses_.push(res);
+  }
 }
 
 } // namespace irc

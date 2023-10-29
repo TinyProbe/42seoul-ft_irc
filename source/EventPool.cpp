@@ -1,16 +1,21 @@
 #include "EventPool.h"
 
+namespace irc {
+
+std::size_t EventPool::getSize() const {
+  return new_events_.size();
+}
+
+void EventPool::setSize(std::size_t size) {
+  new_events_.resize(size);
+}
+
 void EventPool::changeEvent(int ident, int filter, int flags) {
   static struct kevent ev;
   EV_SET(&ev, ident, filter, flags, 0, 0, NULL);
   if (kevent(kqueue_, &ev, 1, NULL, 0, NULL) == -1) {
     throw std::runtime_error(std::string("kevent: ") +
                              std::string(strerror(errno)));
-  }
-  if (flags & EV_ADD) {
-    new_events_.resize(std::min(new_events_.size() + 2ul, 1ul << 30));
-  } else if (flags & EV_DELETE) {
-    new_events_.resize(std::max(static_cast<int>(new_events_.size()) - 2, 0));
   }
 }
 
@@ -28,3 +33,5 @@ bool EventPool::pollEvent(struct kevent &ev) {
   memcpy(&ev, &new_events_[--len], sizeof(struct kevent));
   return true;
 }
+
+} // namespace irc

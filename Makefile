@@ -85,12 +85,16 @@ INC_LST = Program.h \
 					EventPool.h \
 					RequestPool.h \
 					ResponsePool.h \
+					RequestCallbacks.h \
+					ResponseCallbacks.h \
 
 # source/...
 SRC_LST = Program.cpp \
 					EventPool.cpp \
 					RequestPool.cpp \
 					ResponsePool.cpp \
+					RequestCallbacks.cpp \
+					ResponseCallbacks.cpp \
 					main.cpp \
 
 INC = $(addprefix include/,$(INC_LST))
