@@ -30,6 +30,7 @@ class Server {
   Response const &response(Request const &req);
   bool perform(Response const &res);
 
+
  private:
   int         serv_sock_;
   int         port_;
