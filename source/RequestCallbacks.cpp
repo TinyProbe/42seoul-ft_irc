@@ -1,65 +1,63 @@
-#include "RequestCallbacks.h"
+#include "RequestCallback.h"
 
 namespace irc {
 
-RequestCallbacks::RequestCallbacks() {
+RequestCallback::RequestCallback(Server &serv)
+    : serv_(serv) {
   callbacks_.resize(Request::kCount);
-  callbacks_[Request::kUnknown]  = RequestCallbacks::unknown;
-  callbacks_[Request::kAuth]     = RequestCallbacks::auth;
-  callbacks_[Request::kNickname] = RequestCallbacks::nickname;
-  callbacks_[Request::kUsername] = RequestCallbacks::username;
-  callbacks_[Request::kMessage]  = RequestCallbacks::message;
-  callbacks_[Request::kJoin]     = RequestCallbacks::join;
-  callbacks_[Request::kSecede]   = RequestCallbacks::secede;
-  callbacks_[Request::kKick]     = RequestCallbacks::kick;
-  callbacks_[Request::kInvite]   = RequestCallbacks::invite;
-  callbacks_[Request::kTopic]    = RequestCallbacks::topic;
-  callbacks_[Request::kMode]     = RequestCallbacks::mode;
+  callbacks_[Request::kUnknown] = RequestCallback::unknown;
+  callbacks_[Request::kPass]    = RequestCallback::pass;
+  callbacks_[Request::kNick]    = RequestCallback::nick;
+  callbacks_[Request::kUser]    = RequestCallback::user;
+  callbacks_[Request::kPrivMsg] = RequestCallback::privMsg;
+  callbacks_[Request::kJoin]    = RequestCallback::join;
+  callbacks_[Request::kPart]    = RequestCallback::part;
+  callbacks_[Request::kKick]    = RequestCallback::kick;
+  callbacks_[Request::kInvite]  = RequestCallback::invite;
+  callbacks_[Request::kTopic]   = RequestCallback::topic;
+  callbacks_[Request::kMode]    = RequestCallback::mode;
 }
 
-RequestCallbacks::~RequestCallbacks() {
-}
-
-Response const &RequestCallbacks::operator()(Request const &req) {
+Response const &RequestCallback::operator()(Request const &req) {
   int code = req.getRequestCode();
   if (code < 0 || code >= Request::kCount) {
     throw std::runtime_error(
-        std::string("RequestCallbacks(): invalid request code"));
+        std::string("RequestCallback(): invalid request code"));
   }
   return callbacks_[code](req);
 }
 
-Response const &RequestCallbacks::unknown(Request const &req) {
+Response const &RequestCallback::unknown(Request const &req) {
 }
 
-Response const &RequestCallbacks::auth(Request const &req) {
+Response const &RequestCallback::pass(Request const &req) {
 }
 
-Response const &RequestCallbacks::nickname(Request const &req) {
+Response const &RequestCallback::nick(Request const &req) {
 }
 
-Response const &RequestCallbacks::username(Request const &req) {
+Response const &RequestCallback::user(Request const &req) {
 }
 
-Response const &RequestCallbacks::message(Request const &req) {
+Response const &RequestCallback::privMsg(Request const &req) {
 }
 
-Response const &RequestCallbacks::join(Request const &req) {
+Response const &RequestCallback::join(Request const &req) {
 }
 
-Response const &RequestCallbacks::secede(Request const &req) {
+Response const &RequestCallback::part(Request const &req) {
 }
 
-Response const &RequestCallbacks::kick(Request const &req) {
+Response const &RequestCallback::kick(Request const &req) {
 }
 
-Response const &RequestCallbacks::invite(Request const &req) {
+Response const &RequestCallback::invite(Request const &req) {
 }
 
-Response const &RequestCallbacks::topic(Request const &req) {
+Response const &RequestCallback::topic(Request const &req) {
 }
 
-Response const &RequestCallbacks::mode(Request const &req) {
+Response const &RequestCallback::mode(Request const &req) {
 }
 
 } // namespace irc

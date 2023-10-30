@@ -2,12 +2,12 @@
 
 namespace irc {
 
-std::size_t EventPool::getSize() const {
+std::size_t EventPool::getCapacity() const {
   return new_events_.size();
 }
 
-void EventPool::setSize(std::size_t size) {
-  new_events_.resize(size);
+void EventPool::setCapacity(std::size_t cap) {
+  new_events_.resize(cap);
 }
 
 void EventPool::changeEvent(int ident, int filter, int flags) {

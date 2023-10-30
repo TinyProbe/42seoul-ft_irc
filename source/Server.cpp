@@ -5,16 +5,16 @@ namespace irc {
 static int const kMaxBacklog = 128;
 
 int Server::getSocket() const {
-  return serv_sock_;
+  return sock_;
 }
 
-Connections &Server::getConnections() const {
-  return connections_;
+Connections &Server::getConnection() const {
+  return connection_;
 }
 
-Client &Server::getClient(int socket) const {
-  Connections::iterator it = connections_.find(socket);
-  if (it == connections_.end()) {
+Client &Server::getClient(int sock) const {
+  Connections::iterator it = connection_.find(sock);
+  if (it == connection_.end()) {
     throw std::runtime_error(std::string("getClient: invalid key"));
   }
   return it->second;
@@ -25,7 +25,7 @@ Client &Server::getClient(std::string const &nick) const {
   if (it == nick_to_sock_.end()) {
     throw std::runtime_error(std::string("getClient: invalid key"));
   }
-  return connections_[it->second];
+  return connection_[it->second];
 }
 
 void Server::setPort(int port) {
@@ -54,15 +54,15 @@ bool Server::verify(std::string const &password) const {
 }
 
 void Server::standby() {
-  if (serv_sock_ != -1) { close(serv_sock_); }
+  if (sock_ != -1) { close(sock_); }
 
-  if ((serv_sock_ = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+  if ((sock_ = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
     throw std::runtime_error(std::string("socket: ") +
                              std::string(strerror(errno));
   }
-  fcntl(serv_sock_, F_SETFL, O_NONBLOCK);
+  fcntl(sock_, F_SETFL, O_NONBLOCK);
   // for port release when shutdown the server program
-  // setsockopt(serv_sock_, SOL_SOCKET, SO_REUSEADDR, { 1 }, sizeof(int));
+  // setsockopt(sock_, SOL_SOCKET, SO_REUSEADDR, { 1 }, sizeof(int));
 
   struct sockaddr_in serv_addr;
   bzero((void *) &serv_addr, sizeof(serv_addr));
@@ -70,26 +70,33 @@ void Server::standby() {
   serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   serv_addr.sin_port        = htons(port_);
 
-  if (bind(serv_sock_,
+  if (bind(sock_,
            (struct sockaddr *) &serv_addr,
            sizeof(serv_addr)) == -1) {
     throw std::runtime_error(std::string("bind: ") +
                              std::string(strerror(errno));
   }
 
-  if (listen(serv_sock_, kMaxBacklog) == -1) {
+  if (listen(sock_, kMaxBacklog) == -1) {
     throw std::runtime_error(std::string("listen: ") +
                              std::string(strerror(errno));
   }
 }
 
+void Server::preProcess() {
+  static Connections::iterator i;
+  for (i = connection_.begin(); i != connection_.end(); ++i) {
+    i->second.setWrite(false);
+  }
+}
+
 int Server::accept() {
-  int socket;
+  int client_sock;
   struct sockaddr_in serv_addr;
   bzero((void *) &serv_addr, sizeof(serv_addr));
-  if ((socket = accept(serv_sock_,
-                       (struct sockaddr *) &serv_addr,
-                       sizeof(serv_addr))) == -1) {
+  if ((client_sock = accept(sock_,
+                            (struct sockaddr *) &serv_addr,
+                            sizeof(serv_addr))) == -1) {
     if (errno == EWOULDBLOCK) {
       std::cerr << std::string("accept: ") +
                    std::string(strerror(errno) << std::endl;
@@ -98,25 +105,18 @@ int Server::accept() {
                                std::string(strerror(errno)));
     }
   }
-  fcntl(socket, F_SETFL, O_NONBLOCK);
-  connections_[socket].setAddress(serv_addr.sin_addr.s_addr);
-  return socket;
+  fcntl(client_sock, F_SETFL, O_NONBLOCK);
+  connection_[client_sock].setAddress(serv_addr.sin_addr.s_addr);
+  return client_sock;
 }
 
-void Server::preProcess() {
-  static Connections::iterator i;
-  for (i = connections_.begin(); i != connections_.end(); ++i) {
-    i->second.setWrite(false);
-  }
-  // timeout check
-}
-
-void Server::disconnect(int socket) {
-  Connections::iterator it = connections_.find(socket);
-  if (it != connections_.end()) {
+void Server::disconnect(int sock) {
+  Connections::iterator it = connection_.find(sock);
+  if (it != connection_.end()) {
     close(it->first);
     nick_to_sock_.erase(it->second.getNickname());
-    connections_.erase(it);
+    connection_.erase(it);
+    events_.setCapacity(events_.getCapacity() - 2);
   }
 }
 
@@ -124,17 +124,18 @@ void Server::disconnect(std::string const &nick) {
   NickToSock::iterator it = nick_to_sock_.find(nick);
   if (it != nick_to_sock_.end()) {
     close(it->second);
-    connections_.erase(it->second);
+    connection_.erase(it->second);
     nick_to_sock_.erase(it);
+    events_.setCapacity(events_.getCapacity() - 2);
   }
 }
 
 Response const &Server::response(Request const &req) {
-  return request_callbacks_(req);
+  return request_callback_(req);
 }
 
 bool Server::perform(Response const &res) {
-  return response_callbacks_(res);
+  return response_callback_(res);
 }
 
 } // namespace irc

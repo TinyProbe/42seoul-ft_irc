@@ -1,33 +1,35 @@
-#ifndef IRCSERV_REQUESTCALLBACKS_H_
-#define IRCSERV_REQUESTCALLBACKS_H_
+#ifndef IRCSERV_REQUESTCALLBACK_H_
+#define IRCSERV_REQUESTCALLBACK_H_
 
 namespace irc {
 
-typedef Response const &(*RequestCallback)(Request const &);
+typedef Response const &(*RequestFunc)(Request const &);
 
-class RequestCallbacks {
+class RequestCallback {
  public:
-  RequestCallbacks();
-  ~RequestCallbacks();
+  RequestCallback(Server &serv);
+  ~RequestCallback() {}
   Response const &operator()(Request const &req);
 
  private:
   static Response const &unknown(Request const &req);
-  static Response const &auth(Request const &req);
-  static Response const &nickname(Request const &req);
-  static Response const &username(Request const &req);
-  static Response const &message(Request const &req);
+  static Response const &pass(Request const &req);
+  static Response const &nick(Request const &req);
+  static Response const &user(Request const &req);
+  static Response const &privMsg(Request const &req);
   static Response const &join(Request const &req);
-  static Response const &secede(Request const &req);
+  static Response const &part(Request const &req);
   static Response const &kick(Request const &req);
   static Response const &invite(Request const &req);
   static Response const &topic(Request const &req);
   static Response const &mode(Request const &req);
 
-  std::vector<RequestCallback> callbacks_;
+  Server &serv_;
+  std::vector<RequestFunc> callbacks_;
+
   Response response_;
 };
 
 } // namespace irc
 
-#endif // IRCSERV_REQUESTCALLBACKS_H_
+#endif // IRCSERV_REQUESTCALLBACK_H_

@@ -5,7 +5,7 @@ namespace irc {
 
 class Program {
  public:
-  Program() {}
+  Program() : serv_(events_) {}
   ~Program() {}
 
   void run(int argc, char **argv);
@@ -17,7 +17,7 @@ class Program {
   void response(Request const &req);
   void perform(Response const &res);
 
-  Server       server_;
+  Server       serv_;
   EventPool    events_;
   RequestPool  requests_;
   ResponsePool responses_;

@@ -13,8 +13,8 @@ class EventPool {
   }
   ~EventPool() {}
 
-  std::size_t getSize() const;
-  void setSize(std::size_t size);
+  std::size_t getCapacity() const;
+  void setCapacity(std::size_t cap);
 
   void changeEvent(int ident, int filter, int flags);
   bool pollEvent(struct kevent &ev);
