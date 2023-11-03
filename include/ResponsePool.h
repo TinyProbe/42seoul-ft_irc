@@ -1,6 +1,9 @@
 #ifndef IRCSERV_RESPONSEPOOL_H_
 #define IRCSERV_RESPONSEPOOL_H_
 
+#include <queue>
+#include "Response.h"
+
 namespace irc {
 
 class ResponsePool {

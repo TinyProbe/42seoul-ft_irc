@@ -1,6 +1,8 @@
 #include "Command.h"
 
-std::string Command::ServerAddr(Client client_) { 
+namespace irc {
+
+static std::string Command::ServerAddr(Client client_) { 
    std::string addr = ":" +
                       client_.nickname_ + 
                       "!" +
@@ -9,7 +11,7 @@ std::string Command::ServerAddr(Client client_) {
   return addr;
 }
 
-std::string Command::welcome(Client client_) {
+static std::string Command::welcome(Client client_) {
   std::string command;
   
   command = ServerAddr(client_) +
@@ -19,7 +21,7 @@ std::string Command::welcome(Client client_) {
   return command;
 }
 
-std::string Command::topic(Client client_, std::string topic) {
+static std::string Command::topic(Client client_, std::string topic) {
   std::string command;
   
   command = ServerAddr(client_) +
@@ -31,7 +33,7 @@ std::string Command::topic(Client client_, std::string topic) {
   return command;
 }
 
-std::string Command::nosuchnick(Client client_, std::string nick_) {
+static std::string Command::nosuchnick(Client client_, std::string nick_) {
   std::string command;
   
   command = ServerAddr(client_) +
@@ -43,7 +45,7 @@ std::string Command::nosuchnick(Client client_, std::string nick_) {
   return command;
 }
 
-std::string Command::unknowncommand(Client client_, std::string command_) {
+static std::string Command::unknowncommand(Client client_, std::string command_) {
   std::string command;
   
   command = ServerAddr(client_) +
@@ -55,7 +57,7 @@ std::string Command::unknowncommand(Client client_, std::string command_) {
   return command;
 }
 
-std::string Command::nicknameinuse(Client client_, std::string nick_) {
+static std::string Command::nicknameinuse(Client client_, std::string nick_) {
     std::string command;
   
   command = ServerAddr(client_) +
@@ -67,3 +69,4 @@ std::string Command::nicknameinuse(Client client_, std::string nick_) {
   return command;
 }
 
+}

@@ -85,6 +85,10 @@ INC_LST = Program.h \
 					EventPool.h \
 					RequestPool.h \
 					ResponsePool.h \
+					Client.h \
+					Server.h \
+					Request.h \
+					Response.h \
 
 # source/...
 SRC_LST = Program.cpp \
@@ -92,6 +96,8 @@ SRC_LST = Program.cpp \
 					RequestPool.cpp \
 					ResponsePool.cpp \
 					main.cpp \
+					Client.cpp \
+					Server.cpp \
 
 INC = $(addprefix include/,$(INC_LST))
 OBJ = $(addprefix $(BUILD_DIR)/,$(SRC_LST:.cpp=.o))

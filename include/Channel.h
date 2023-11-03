@@ -8,13 +8,13 @@ class Channel {
   Channel() {}
   ~Channel() {}
 
-  bool check_ban(std::string nick);
-  void input_op(std::string nick);
-  void output_op(std::string nick);
-  void input_ch(std::string nick);
-  void output_ch(std::string nick);
-  void input_ban(std::string nick);
-  void output_ban(std::string nick);
+  bool checkBan(std::string nick);
+  void inputOp(std::string nick);
+  void outputOp(std::string nick);
+  void inputCh(std::string nick);
+  void outputCh(std::string nick);
+  void inputBan(std::string nick);
+  void outputBan(std::string nick);
   std::string getTopic() const;
   void setTopic(std::string topic);
   std::string getPassword() const;

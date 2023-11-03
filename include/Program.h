@@ -1,6 +1,21 @@
 #ifndef IRCSERV_PROGRAM_H_
 #define IRCSERV_PROGRAM_H_
 
+#include <iostream>
+ #include <sys/socket.h>
+ #include <sys/types.h>
+#include "Request.h"
+#include "Response.h"
+#include "Server.h"
+#include "EventPool.h"
+#include "ResponsePool.h"
+#include "RequestPool.h"
+#include <unistd.h>
+#include <cstring>
+
+#define RECOGNIZE 1
+#define JOIN 2
+
 namespace irc {
 
 class Program {

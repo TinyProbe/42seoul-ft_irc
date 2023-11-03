@@ -2,12 +2,18 @@
 #define IRCSERV_SERVER_H_
 
 #include "Client.h"
+#include <iostream>
+#include <map>
 #define MAX_BACKLOG 128
+
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 namespace irc {
 
-using Connections = std::unordered_map<int, Client>;
-using NickToSocket = std::unordered_map<std::string, int>;
+typedef std::map<int, Client> Connections;
+typedef std::map<std::string, int> NickToSocket;
 
 class Server {
  public:
@@ -17,8 +23,8 @@ class Server {
   void setPort(std::string port);
   void setPassword(std::string password);
   int getSocket() const;
-  Connections &getConnections() const;
-  Client &getClient(int socket) const;
+  Connections &getConnections();
+  Client &getClient(int socket);
   void standby();
   void preProcess();
   void disconnect(int socket);

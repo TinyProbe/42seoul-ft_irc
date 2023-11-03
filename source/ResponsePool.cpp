@@ -1,10 +1,10 @@
 #include "ResponsePool.h"
 
-void ResponsePool::push(Response const &res) {
+void irc::ResponsePool::push(Response const &res) {
   new_responses_.push(res);
 }
 
-bool ResponsePool::pollResponse(Response &res) {
+bool irc::ResponsePool::pollResponse(Response &res) {
   if (new_responses_.empty()) {
     return false;
   }

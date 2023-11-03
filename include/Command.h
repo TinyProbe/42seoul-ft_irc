@@ -1,6 +1,9 @@
 #ifndef IRCSERV_COMMAND_H_
 #define IRCSERV_COMMAND_H_
 
+#include <iostream>
+#include "Client.h"
+
 namespace irc {
 
 #define RPL_WELCOME "001"
@@ -14,11 +17,11 @@ class Command {
   Command() {}
   ~Command() {}
 
-  std::string welcome(Client client_);
-  std::string topic(Client client_, std::string topic);
-  std::string nosuchnick(Client client_, std::string nick_);
-  std::string unknowncommand(Client client_, std::string command);
-  std::string nicknameinuse(Client client_, std::string nick_);
+  static std::string welcome(Client client_);
+  static std::string topic(Client client_, std::string topic);
+  static std::string nosuchnick(Client client_, std::string nick_);
+  static std::string unknowncommand(Client client_, std::string command);
+  static std::string nicknameinuse(Client client_, std::string nick_);
 
  private:
   std::string ServerAddr(Client client_);

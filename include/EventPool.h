@@ -1,6 +1,10 @@
 #ifndef IRCSERV_EVENTPOOL_H_
 #define IRCSERV_EVENTPOOL_H_
 
+#include <sys/event.h>
+#include <vector>
+#include <iostream>
+
 namespace irc {
 
 class EventPool {

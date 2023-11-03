@@ -1,7 +1,10 @@
-# include "Server.hpp"
+# include "Server.h"
+
+
+namespace irc {
 
 void Server::setPort(std::string port) {
-  int size;
+  unsigned long size;
   port_ = 0;
   
   for (size = 0; size < port.size(); ++size) {
@@ -16,10 +19,10 @@ void Server::setPort(std::string port) {
 }
 
 void Server::setPassword(std::string password) {
-  int size;
+  unsigned long size;
 
   for (size = 0; size < password.size(); ++size) {
-    if (!isprint(password[i])) {
+    if (!isprint(password[size])) {
       break ;
     }
   }
@@ -29,15 +32,15 @@ void Server::setPassword(std::string password) {
   password_ = password;
 }
 
-int Server::getSocket() const {
+int Server::getSocket() const{
   return server_socket_;
 }
 
-Connections &Server::getConnections() const {
+Connections &Server::getConnections() {
   return connections_;
 }
 
-Client &Server::getClient (int socket) const {
+Client &Server::getClient (int socket) {
   return connections_[socket];
 }
 
@@ -54,7 +57,7 @@ void Server::standby() {
   memset(&server_addr, 0, sizeof(server_addr));
   server_addr.sin_family      = AF_INET;
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  server_addr.sin_port        = htons(Port_number_);
+  server_addr.sin_port        = htons(port_);
   fcntl(Server_socket, F_SETFL, O_NONBLOCK);
   if (bind(Server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
     throw std::runtime_error(std::string("bind() error\n") + 
@@ -78,7 +81,7 @@ void Server::disconnect(int socket) {
 }
 
 int Server::accept() {
-  int socket = accept(server_socket_, NULL, NULL);
+  int socket = ::accept(server_socket_, NULL, NULL);
   if (socket == -1) {
     throw std::runtime_error(std::string("accept() error\n") + 
                              std::string(strerror(errno)));
@@ -86,4 +89,6 @@ int Server::accept() {
   fcntl(socket, F_SETFL, O_NONBLOCK);
   connections_[socket];
   return socket;
+}
+
 }
