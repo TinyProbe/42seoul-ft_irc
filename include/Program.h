@@ -5,7 +5,7 @@ namespace irc {
 
 class Program {
  public:
-  Program() : serv_(events_) {}
+  Program() {}
   ~Program() {}
 
   void run(int argc, char **argv);

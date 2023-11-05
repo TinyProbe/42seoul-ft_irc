@@ -18,7 +18,7 @@ RequestCallback::RequestCallback(Server &serv)
   callbacks_[Request::kMode]    = RequestCallback::mode;
 }
 
-Response const &RequestCallback::operator()(Request const &req) {
+std::vector<Response> const &RequestCallback::operator()(Request const &req) {
   int code = req.getRequestCode();
   if (code < 0 || code >= Request::kCount) {
     throw std::runtime_error(
@@ -27,37 +27,37 @@ Response const &RequestCallback::operator()(Request const &req) {
   return callbacks_[code](req);
 }
 
-Response const &RequestCallback::unknown(Request const &req) {
+std::vector<Response> const &RequestCallback::unknown(Request const &req) {
 }
 
-Response const &RequestCallback::pass(Request const &req) {
+std::vector<Response> const &RequestCallback::pass(Request const &req) {
 }
 
-Response const &RequestCallback::nick(Request const &req) {
+std::vector<Response> const &RequestCallback::nick(Request const &req) {
 }
 
-Response const &RequestCallback::user(Request const &req) {
+std::vector<Response> const &RequestCallback::user(Request const &req) {
 }
 
-Response const &RequestCallback::privMsg(Request const &req) {
+std::vector<Response> const &RequestCallback::privMsg(Request const &req) {
 }
 
-Response const &RequestCallback::join(Request const &req) {
+std::vector<Response> const &RequestCallback::join(Request const &req) {
 }
 
-Response const &RequestCallback::part(Request const &req) {
+std::vector<Response> const &RequestCallback::part(Request const &req) {
 }
 
-Response const &RequestCallback::kick(Request const &req) {
+std::vector<Response> const &RequestCallback::kick(Request const &req) {
 }
 
-Response const &RequestCallback::invite(Request const &req) {
+std::vector<Response> const &RequestCallback::invite(Request const &req) {
 }
 
-Response const &RequestCallback::topic(Request const &req) {
+std::vector<Response> const &RequestCallback::topic(Request const &req) {
 }
 
-Response const &RequestCallback::mode(Request const &req) {
+std::vector<Response> const &RequestCallback::mode(Request const &req) {
 }
 
 } // namespace irc

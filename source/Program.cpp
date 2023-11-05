@@ -28,7 +28,7 @@ void Program::init(int argc, char **argv) {
   serv_.standby();
 
   events_.changeEvent(serv_.getSocket(), EVFILT_READ, EV_ADD);
-  events_.setCapacity(events_.getCapacity() + 5);
+  events_.setCapacity(5);
 }
 
 void Program::loop() {
@@ -66,7 +66,7 @@ void Program::request(struct kevent const &ev) {
       int sock = serv_.accept();
       events_.changeEvent(sock, EVFILT_READ, EV_ADD);
       events_.changeEvent(sock, EVFILT_WRITE, EV_ADD);
-      events_.setCapacity(events_.getCapacity() + 2);
+      events_.setCapacity(serv_.getConnection().size() * 2 + 5);
     }
   } else {
     Client &client = serv_.getClient(ev.ident);
@@ -80,7 +80,10 @@ void Program::request(struct kevent const &ev) {
 }
 
 void Program::response(Request const &req) {
-  responses_.push(serv_.response(req));
+  std::vector<Response> const &ress = serv_.response(req);
+  for (int i = 0; i < ress.size(); ++i) {
+    responses_.push(ress[i]);
+  }
 }
 
 void Program::perform(Response const &res) {

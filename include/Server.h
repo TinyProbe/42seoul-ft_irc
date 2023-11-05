@@ -11,8 +11,7 @@ class Server {
   Server(EventPool &events)
       : sock_(-1), port_(-1),
         request_callback_(*this),
-        response_callback_(*this),
-        events_(events) {}
+        response_callback_(*this) {}
   ~Server() {}
 
   int getSocket() const;
@@ -29,13 +28,12 @@ class Server {
   void disconnect(int sock);
   void disconnect(std::string const &nick);
 
-  Response const &response(Request const &req);
+  std::vector<Response> const &response(Request const &req);
   bool perform(Response const &res);
 
  private:
-  EventPool &events_;
-
   int         sock_;
+  // std::string hostname_;
   int         port_;
   std::string password_;
 

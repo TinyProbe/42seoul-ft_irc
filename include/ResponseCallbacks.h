@@ -25,6 +25,7 @@ class ResponseCallback {
   static bool mode(Response const &res);
 
   Server &serv_;
+
   std::vector<ResponseFunc> callbacks_;
 };
 

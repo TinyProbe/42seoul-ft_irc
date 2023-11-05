@@ -65,14 +65,14 @@ void Server::standby() {
   // setsockopt(sock_, SOL_SOCKET, SO_REUSEADDR, { 1 }, sizeof(int));
 
   struct sockaddr_in serv_addr;
-  bzero((void *) &serv_addr, sizeof(serv_addr));
+  bzero((void *) &serv_addr, sizeof(struct sockaddr_in));
   serv_addr.sin_family      = AF_INET;
   serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   serv_addr.sin_port        = htons(port_);
 
   if (bind(sock_,
            (struct sockaddr *) &serv_addr,
-           sizeof(serv_addr)) == -1) {
+           sizeof(struct sockaddr_in)) == -1) {
     throw std::runtime_error(std::string("bind: ") +
                              std::string(strerror(errno));
   }
@@ -92,11 +92,11 @@ void Server::preProcess() {
 
 int Server::accept() {
   int client_sock;
-  struct sockaddr_in serv_addr;
-  bzero((void *) &serv_addr, sizeof(serv_addr));
+  struct sockaddr_in client_addr;
+  bzero((void *) &client_addr, sizeof(struct sockaddr_in));
   if ((client_sock = accept(sock_,
-                            (struct sockaddr *) &serv_addr,
-                            sizeof(serv_addr))) == -1) {
+                            (struct sockaddr *) &client_addr,
+                            sizeof(struct sockaddr_in))) == -1) {
     if (errno == EWOULDBLOCK) {
       std::cerr << std::string("accept: ") +
                    std::string(strerror(errno) << std::endl;
@@ -106,17 +106,18 @@ int Server::accept() {
     }
   }
   fcntl(client_sock, F_SETFL, O_NONBLOCK);
-  connection_[client_sock].setAddress(serv_addr.sin_addr.s_addr);
+  Client &client = connection_[client_sock];
+  client.setAddress(ntohl(client_addr.sin_addr.s_addr));
+  client.setPort(ntohs(client_addr.sin_port));
   return client_sock;
 }
 
 void Server::disconnect(int sock) {
-  Connections::iterator it = connection_.find(sock);
+  Connection::iterator it = connection_.find(sock);
   if (it != connection_.end()) {
     close(it->first);
     nick_to_sock_.erase(it->second.getNickname());
     connection_.erase(it);
-    events_.setCapacity(events_.getCapacity() - 2);
   }
 }
 
@@ -126,11 +127,10 @@ void Server::disconnect(std::string const &nick) {
     close(it->second);
     connection_.erase(it->second);
     nick_to_sock_.erase(it);
-    events_.setCapacity(events_.getCapacity() - 2);
   }
 }
 
-Response const &Server::response(Request const &req) {
+std::vector<Response> const &Server::response(Request const &req) {
   return request_callback_(req);
 }
 
