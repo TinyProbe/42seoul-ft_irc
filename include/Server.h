@@ -8,13 +8,11 @@ typedef std::unordered_map<std::string, int> NickToSock;
 
 class Server {
  public:
-  Server(EventPool &events)
-      : sock_(-1), port_(-1),
-        request_callback_(*this),
-        response_callback_(*this) {}
+  Server();
   ~Server() {}
 
   int getSocket() const;
+  std::string const &getHost() const;
   Connection &getConnection() const;
   Client &getClient(int sock) const;
   Client &getClient(std::string const &nick) const;
@@ -33,9 +31,9 @@ class Server {
 
  private:
   int         sock_;
-  // std::string hostname_;
   int         port_;
   std::string password_;
+  std::string host_;
 
   Connection connection_;
   NickToSock nick_to_sock_;

@@ -23,7 +23,7 @@ void Program::run(int argc, char **argv) {
 }
 
 void Program::init(int argc, char **argv) {
-  serv_.setPort(string_to<int>(argv[1]));
+  serv_.setPort(string_to<int>(std::string(argv[1])));
   serv_.setPassword(std::string(argv[2]));
   serv_.standby();
 
@@ -71,8 +71,12 @@ void Program::request(struct kevent const &ev) {
   } else {
     Client &client = serv_.getClient(ev.ident);
     if (ev.filter == EVFILT_READ) {
-      client.receive();
-      requests_.push(client.request());
+      if (!client.receive()) {
+        serv_.disconnect(client.getSocket());
+      }
+      while (client.makeRequest()) {
+        requests_.push(client.getRequest());
+      }
     } else if (ev.filter == EVFILT_WRITE) {
       client.setWrite(true);
     }

@@ -27,7 +27,8 @@ class RequestCallback {
   Server &serv_;
 
   std::vector<RequestFunc> callbacks_;
-  std::vector<Response> ress_;
+
+  static std::vector<Response> ress_;
 };
 
 } // namespace irc

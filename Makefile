@@ -91,8 +91,8 @@ INC_LST = \
 					EventPool.h \
 					RequestPool.h \
 					ResponsePool.h \
-					RequestCallbacks.h \
-					ResponseCallbacks.h \
+					RequestCallback.h \
+					ResponseCallback.h \
 
 # source/...
 SRC_LST = \
@@ -106,8 +106,8 @@ SRC_LST = \
 					EventPool.cpp \
 					RequestPool.cpp \
 					ResponsePool.cpp \
-					RequestCallbacks.cpp \
-					ResponseCallbacks.cpp \
+					RequestCallback.cpp \
+					ResponseCallback.cpp \
 
 INC = $(addprefix include/,$(INC_LST))
 OBJ = $(addprefix $(BUILD_DIR)/,$(SRC_LST:.cpp=.o))

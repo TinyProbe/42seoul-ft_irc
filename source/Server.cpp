@@ -4,8 +4,62 @@ namespace irc {
 
 static int const kMaxBacklog = 128;
 
+Server::Server()
+    : sock_(-1),
+      port_(-1),
+      request_callback_(*this),
+      response_callback_(*this) {
+  int sock = socket(PF_INET, SOCK_STREAM, 0);
+  if (sock == -1) {
+    throw std::runtime_error(std::string("socket: ") +
+                             std::string(strerror(errno)));
+  }
+  int flag = 1;
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int));
+
+  struct hostent *hostinfo;
+  if ((hostinfo = gethostbyname("www.google.com")) == NULL) {
+    throw std::runtime_error(std::string("gethostbyname: ") +
+                             std::string(strerror(errno)));
+  }
+
+  struct sockaddr_in target_addr;
+  bzero(&target_addr, sizeof(struct sockaddr_in));
+  target_addr.sin_family = AF_INET;
+  target_addr.sin_port = htons(80);
+  memcpy(&target_addr.sin_addr, hostinfo->h_addr, hostinfo->h_length);
+  if (connect(sock,
+              (struct sockaddr *) &target_addr,
+              sizeof(struct sockaddr_in)) == -1) {
+    throw std::runtime_error(std::string("connect: ") +
+                             std::string(strerror(errno)));
+  }
+
+  struct sockaddr_in serv_addr;
+  socklen_t serv_len = sizeof(struct sockaddr_in);
+  bzero(&serv_addr, serv_len);
+  if (getsockname(sock,
+                  (struct sockaddr *) &serv_addr,
+                  &serv_len) == -1) {
+    throw std::runtime_error(std::string("getsockname: ") +
+                             std::string(strerror(errno)));
+  }
+
+  int ip = ntohl(serv_addr.sin_addr.s_addr);
+  host_ += std::to_string(((unsigned char *) &ip)[3]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[2]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[1]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[0]);
+
+  close(sock);
+}
+
 int Server::getSocket() const {
   return sock_;
+}
+
+std::string const &Server::getHost() const {
+  return host_;
 }
 
 Connections &Server::getConnection() const {
@@ -34,6 +88,12 @@ void Server::setPort(int port) {
                              std::string(strerror(errno)));
   }
   port_ = port;
+  std::string::iterator it = host_.find(":");
+  if (it != host_.end()) {
+    host_.resize(it - host_.begin());
+  }
+  host_ += ':';
+  host_ += std::to_string(port);
 }
 
 void Server::setPassword(std::string const &password) {
@@ -61,8 +121,9 @@ void Server::standby() {
                              std::string(strerror(errno));
   }
   fcntl(sock_, F_SETFL, O_NONBLOCK);
-  // for port release when shutdown the server program
-  // setsockopt(sock_, SOL_SOCKET, SO_REUSEADDR, { 1 }, sizeof(int));
+
+  int flag[] = { 1 };
+  setsockopt(sock_, SOL_SOCKET, SO_REUSEADDR, flag, sizeof(int));
 
   struct sockaddr_in serv_addr;
   bzero((void *) &serv_addr, sizeof(struct sockaddr_in));
@@ -93,10 +154,13 @@ void Server::preProcess() {
 int Server::accept() {
   int client_sock;
   struct sockaddr_in client_addr;
-  bzero((void *) &client_addr, sizeof(struct sockaddr_in));
+  socklen_t client_len;
+  bzero(&client_addr, sizeof(struct sockaddr_in));
+  bzero(&client_len, sizeof(socklen_t));
+
   if ((client_sock = accept(sock_,
                             (struct sockaddr *) &client_addr,
-                            sizeof(struct sockaddr_in))) == -1) {
+                            &client_len)) == -1) {
     if (errno == EWOULDBLOCK) {
       std::cerr << std::string("accept: ") +
                    std::string(strerror(errno) << std::endl;
@@ -106,9 +170,17 @@ int Server::accept() {
     }
   }
   fcntl(client_sock, F_SETFL, O_NONBLOCK);
-  Client &client = connection_[client_sock];
-  client.setAddress(ntohl(client_addr.sin_addr.s_addr));
-  client.setPort(ntohs(client_addr.sin_port));
+
+  if (getsockname(client_sock,
+                  (struct sockaddr *) &client_addr,
+                  &client_len) == -1) {
+    throw std::runtime_error(std::string("getsockname: ") +
+                             std::string(strerror(errno)));
+  }
+
+  Client &client = connection_[client_sock]
+  client.setSocket(client_sock);
+  client.setAddress(client_addr);
   return client_sock;
 }
 

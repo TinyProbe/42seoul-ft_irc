@@ -2,6 +2,8 @@
 
 namespace irc {
 
+std::vector<Response> RequestCallback::ress_;
+
 RequestCallback::RequestCallback(Server &serv)
     : serv_(serv) {
   callbacks_.resize(Request::kCount);
