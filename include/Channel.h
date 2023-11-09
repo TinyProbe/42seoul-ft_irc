@@ -1,14 +1,19 @@
 #ifndef IRCSERV_CHANNEL_H_
 #define IRCSERV_CHANNEL_H_
 
+#include <iostream>
+#include <vector>
+
 namespace irc {
 
 class Channel {
  public:
   Channel() {}
+  Channel(std::string password)
+  :password_(password) {}
   ~Channel() {}
 
-  bool checkBan(std::string nick);
+  // bool checkBan(std::string nick) const;
   void inputOp(std::string nick);
   void outputOp(std::string nick);
   void inputCh(std::string nick);
@@ -18,6 +23,7 @@ class Channel {
   std::string getTopic() const;
   void setTopic(std::string topic);
   std::string getPassword() const;
+  void setPassword(std::string password);
 
  private:
   std::vector<std::string> op_nick_;

@@ -7,14 +7,20 @@ namespace irc {
 
 class Response {
  public:
-  Response(std::string receive) : type(receive) {}
+  Response(std::string receive, int type, int socket)
+  : response_(receive), type_(type), socket_(socket) {}
   Response() {}
   ~Response() {}
 
   int getResponseCode() const {
 	return (1);
   }
-  std::string type;
+  std::string getResponse() const {
+    return response_;
+  }
+  std::string response_;
+  int type_;
+  int socket_;
 };
 
 } // namespace irc

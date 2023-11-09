@@ -9,6 +9,7 @@ std::string Client::getNickname() const {
 void Client::receive(int socket) {
   char buf[MAX_BUF];
   
+  socket_ = socket;
   if (recv(socket, buf, MAX_BUF, MSG_DONTWAIT) == -1) {
     throw std::runtime_error(std::string("recv() error\n") + 
                              std::string(strerror(errno)));
@@ -17,7 +18,8 @@ void Client::receive(int socket) {
     receive_.clear();
   }
   receive_ += buf;
-  std::cout << buf << std::endl;
+  std::cout << "receive : "<< buf;
+  memset(buf, 0, MAX_BUF);
 }
 
 bool Client::canRequest() const {
@@ -28,7 +30,7 @@ bool Client::canRequest() const {
 
 Request Client::createRequest() {
   std::cout << "createmessage  " << receive_ << std::endl;
-  return Request(receive_);
+  return Request(receive_, nickname_, usrname_, socket_);
 }
 
 void Client::setWrite(bool value) {
@@ -40,21 +42,56 @@ bool Client::canWrite() const {
 }
 
 void Client::certification() {
-  char *receive = const_cast<char*>(receive_.c_str());
-  char *word = strtok(receive, " ");
+  if (!nickname_.empty() && !usrname_.empty() && !password_.empty()) {
+    return ;
+  }
+  if (receive_.find("PASS") != std::string::npos) {
+    for (int i = 5; receive_[i]; ++i) {
+      if (!isprint(receive_[i]) || receive_[i] == ' ') {
+        break ;
+      }
+      password_.push_back(receive_[i]);
+    }
+    std::cout << password_ << std::endl;
+  }
+  if (receive_.find("NICK") != std::string::npos) {
+    for (int i = 5; receive_[i]; ++i) {
+      if (!isprint(receive_[i]) || receive_[i] == ' ') {
+         break ;
+      }
+      nickname_.push_back(receive_[i]);
+    }
+    std::cout << nickname_ << std::endl;
+  }
+  if (receive_.find("USER") != std::string::npos) {
+    for (int i = 5; receive_[i]; ++i) {
+      if (!isprint(receive_[i]) || receive_[i] == ' ') {
+        break;
+      }
+      usrname_.push_back(receive_[i]);
+    }
+    std::cout << usrname_ << std::endl;
+  }
+}
 
-  if (!strcmp(word, "PASS")){
-    word = strtok(NULL, " ");
-    password_ = word;
+std::string Client::getPassword() const {
+  return password_;
+}
+
+Client &Client::operator=(const Client &a) {
+  if (this != &a) {
+    nickname_ = a.nickname_;
+    usrname_ = a.usrname_;
+    write_ = a.write_;
+    receive_ = a.receive_;
+    password_ = a.password_;
+    socket_ = a.socket_;
   }
-   if (!strcmp(word, "NICK")){
-    word = strtok(NULL, " ");
-    nickname_ = word;
-  }
-   if (!strcmp(word, "USER")){
-    word = strtok(NULL, " ");
-    usrname_ = word;
-  }
+  return *this;
+}
+
+void Client::setNickname(std::string nick) {
+  nickname_ = nick;
 }
 
 }

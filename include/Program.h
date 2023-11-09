@@ -10,11 +10,14 @@
 #include "EventPool.h"
 #include "ResponsePool.h"
 #include "RequestPool.h"
+#include "Command.h"
 #include <unistd.h>
 #include <cstring>
 
 #define RECOGNIZE 1
 #define JOIN 2
+#define NICK 3
+#define PRIVMSG 4
 
 namespace irc {
 

@@ -7,21 +7,22 @@ namespace irc {
 
 class Request {
  public:
-  Request(std::string receive) : type(receive) {}
+  Request(std::string receive, std::string nickname, std::string usrname, int socket) 
+  : type_(receive), nickname_(nickname), usrname_(usrname), socket_(socket) {
+  }
   Request() {}
   ~Request() {}
 
-  int getRequestCode() const {
-    if (type[0] == 'U') { return 1; }
-    if (type[0] ==  'J') { return 2; }
-    return 0;
-  }
-  int getSocket() const {
-    return socket;
-  }
+  int getRequestCode() const ;
+  int getSocket() const ;
+  std::string getNickname() const ;
+  std::string getUsrname() const ;
+  std::string getType() const;
  private:
-  std::string type;
-  int socket;
+  std::string type_;
+  std::string nickname_;
+  std::string usrname_;
+  int socket_;
 };
 
 } // namespace irc

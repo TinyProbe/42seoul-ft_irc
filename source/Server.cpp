@@ -75,7 +75,7 @@ void Server::preProcess() {
 }
 
 void Server::disconnect(int socket) {
-  nick_to_socket_.erase(connections_[socket].getNickname());
+  // nick_to_socket_.erase(connections_[socket].getNickname());
   connections_.erase(socket);
   close (socket);
 }
@@ -89,6 +89,40 @@ int Server::accept() {
   fcntl(socket, F_SETFL, O_NONBLOCK);
   connections_[socket];
   return socket;
+}
+
+std::string Server::getPassword() const {
+  return password_;
+}
+
+int Server::samename(std::string nickname) const {
+  Connections::const_iterator iter;
+  int num = 0;
+
+  for (iter = connections_.begin(); iter != connections_.end(); ++iter) {
+    if (iter->second.getNickname() == nickname)
+      num++;
+  }
+  std::cout << num << std::endl;
+  return num;
+}
+
+bool Server::setChannel(std::string name, std::string password, std::string nick) {
+  if (sev_channel_.find(name) == sev_channel_.end()) {
+    sev_channel_[name];
+    sev_channel_[name].inputOp(nick);
+    sev_channel_[name].inputCh(nick);
+    sev_channel_[name].setPassword(password);
+    return true;
+
+  }
+  else {
+    return false;
+  }
+}
+
+Channel &Server::getChannel(std::string name) {
+  return sev_channel_[name];
 }
 
 }

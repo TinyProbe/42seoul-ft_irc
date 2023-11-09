@@ -84,25 +84,65 @@ void Program::request(struct kevent const &ev) {
 
 void Program::response(Request const &req) {
   int code = req.getRequestCode();
-  std::cout << "code " << code << std::endl;
+  // std::cout << req.getType() <<std::endl;
   if (code == RECOGNIZE) {
-    responses_.push(Response(":migo!go@127.0.0.1 1 migo :Welcome to the IRC server migo\r\n"));
+    Client &client = server_.getClient(req.getSocket());
+    if (client.getPassword() != server_.getPassword()) {
+      responses_.push(Response(Command::wrongpass(req, client.getPassword()), code, req.getSocket()));
+    }
+    else if (server_.samename(client.getNickname()) == 2) {
+      responses_.push(Response(Command::nicknameinuse(req, client.getNickname()), code, req.getSocket()));
+    }
+    else
+      responses_.push(Response(Command::welcome(req), code, req.getSocket()));
   } 
   if (code == JOIN) {
-    responses_.push(Response(":migo!go@127.0.0.1 JOIN #channel2\r\n"));
-  } 
-  // else if (code == Reque) {
-  // } else if (code == Request::) {
+    std::string name = Command::ChName(req.getType());
+    std::string password = Command::ChPassword(req.getType());
+
+    if (!server_.setChannel(name, password, req.getNickname())) {
+      Channel &channel = server_.getChannel(name);
+      if (password != channel.getPassword()) {
+        responses_.push(Response(Command::wrongpass(req, password), code, req.getSocket()));
+        return ;
+      }
+      channel.inputCh(req.getNickname());
+    }
+    responses_.push(Response(Command::join(req), code, req.getSocket()));
+  }
+  else if (code == NICK) {
+    std::string nick = Command::Nick(req.getType());
+    if (server_.samename(nick) == 1) {
+      responses_.push(Response(Command::nicknameinuse(req, nick), code, req.getSocket()));
+      return ;
+    }
+    else if (nick == ":") {
+      responses_.push(Response(Command::NoNickname(req), code, req.getSocket()));
+      return ;
+    }
+    Client &client = server_.getClient(req.getSocket());
+    client.setNickname(nick);
+    responses_.push(Response(Command::ChangeNick(req), code, req.getSocket()));
+  }
+  else if (code == PRIVMSG) {
+    std::string nick = Command::PriNick(req.getType());
+    if (server_.samename(nick) == 0) {
+      responses_.push(Response(Command::nosuchnick(req, nick), code, req.getSocket()));
+      return ;
+    }
+    responses_.push(Response(Command::Privmsg(req), code, req.getSocket()));
+  }
   // } else if (code == Request::) {
   // } else if (code == Request::) {
   // }
 }
 
 void Program::perform(Response const &res) {
-  res.getResponseCode();
-  char *tmp = const_cast<char*>(res.type.c_str());
-  std::cout << "send message " << tmp << std::endl;
-  send(5, tmp, strlen(tmp), 0);
+  char *tmp;
+
+  tmp = const_cast<char*>(res.response_.c_str());
+  std::cout << "send mess : " << tmp << std::endl;
+  send(res.socket_, tmp, strlen(tmp), 0);
 }
 
 } // namespace irc

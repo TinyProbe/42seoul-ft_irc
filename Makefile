@@ -89,6 +89,8 @@ INC_LST = Program.h \
 					Server.h \
 					Request.h \
 					Response.h \
+					command.h \
+					Channel.h
 
 # source/...
 SRC_LST = Program.cpp \
@@ -98,6 +100,9 @@ SRC_LST = Program.cpp \
 					main.cpp \
 					Client.cpp \
 					Server.cpp \
+					command.cpp \
+					Request.cpp \
+					Channel.cpp
 
 INC = $(addprefix include/,$(INC_LST))
 OBJ = $(addprefix $(BUILD_DIR)/,$(SRC_LST:.cpp=.o))
