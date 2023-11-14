@@ -66,6 +66,14 @@ Connections &Server::getConnection() const {
   return connection_;
 }
 
+NickToSock &Server::getNickToSock() const {
+  return nick_to_sock_;
+}
+
+ChannelMap &Server::getChannelMap() const {
+  return channel_map_;
+}
+
 Client &Server::getClient(int sock) const {
   Connections::iterator it = connection_.find(sock);
   if (it == connection_.end()) {
@@ -98,7 +106,7 @@ void Server::setPort(int port) {
 
 void Server::setPassword(std::string const &password) {
   if (password.size() < 6 || password.size() > 16) {
-    throw std::runtime_error(std::string("password: 6 <= password >= 16"));
+    throw std::runtime_error(std::string("password: 6 <= password <= 16"));
   }
   for (int i = 0; i < password.size(); ++i) {
     if (!isprint(password[i])) {

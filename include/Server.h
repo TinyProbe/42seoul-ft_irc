@@ -5,6 +5,7 @@ namespace irc {
 
 typedef std::unordered_map<int, Client> Connection;
 typedef std::unordered_map<std::string, int> NickToSock;
+typedef std::unordered_map<std::string, Channel> ChannelMap;
 
 class Server {
  public:
@@ -14,6 +15,8 @@ class Server {
   int getSocket() const;
   std::string const &getHost() const;
   Connection &getConnection() const;
+  NickToSock &getNickToSock() const;
+  ChannelMap &getChannelMap() const;
   Client &getClient(int sock) const;
   Client &getClient(std::string const &nick) const;
   void setPort(int port);
@@ -37,6 +40,7 @@ class Server {
 
   Connection connection_;
   NickToSock nick_to_sock_;
+  ChannelMap channel_map_;
 
   RequestCallback  request_callback_;
   ResponseCallback response_callback_;

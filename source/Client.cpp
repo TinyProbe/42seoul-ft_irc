@@ -8,6 +8,10 @@ bool Client::getAuth() const {
   return auth_;
 }
 
+std::string const &Client::getPassword() const {
+  return password_;
+}
+
 int Client::getSocket() const {
   return sock_;
 }
@@ -20,12 +24,23 @@ void Client::setAuth(bool auth) {
   auth_ = auth;
 }
 
+void Client::setPassword(std::string const &password) {
+  password_ = password;
+}
+
 void Client::setSocket(int sock) {
   sock_ = sock;
 }
 
 void Client::setAddress(struct sockaddr_in const &addr) {
   addr_ = addr;
+  int ip = ntohl(addr.sin_addr.s_addr);
+  int port = ntohs(addr.sin_port);
+  host_  = std::to_string(((unsigned char *) &ip)[3]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[2]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[1]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[0]) + ':';
+  host_ += std::to_string(port);
 }
 
 std::string const &Client::getNick() const {
@@ -73,11 +88,11 @@ void Client::setWrite(bool can_write) {
 }
 
 bool Client::receive() {
-  static char buf[kMaxBuffer];
+  static char buf[kMaxBuffer + 1];
   static int len;
   buffer_.clear();
   while (true) {
-    len = recv(sock_, buf, kMaxBuffer - 1, MSG_DONTWAIT | MSG_NOSIGNAL);
+    len = recv(sock_, buf, kMaxBuffer, MSG_DONTWAIT | MSG_NOSIGNAL);
     if (len == -1 && errno != EAGAIN) {
       std::cerr << std::string("recv: ") +
                    std::string(strerror(errno)) << std::endl;
@@ -90,8 +105,12 @@ bool Client::receive() {
 }
 
 bool Client::makeRequest() {
-  // make in request_, return true if possible to make a Request, otherwise
-  // false.
+  if (buffer_.size() == 0) { return false; }
+  request_.clear();
+
+  // ...
+
+  return true;
 }
 
 Request const &Client::getRequest() const {

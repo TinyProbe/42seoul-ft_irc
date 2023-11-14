@@ -1,4 +1,4 @@
-#ifndef IRCSERV_RESPONSECALLBACK_H_
+#.clear()ifndef IRCSERV_RESPONSECALLBACK_H_
 #define IRCSERV_RESPONSECALLBACK_H_
 
 namespace irc {

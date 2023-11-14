@@ -71,11 +71,12 @@ void Program::request(struct kevent const &ev) {
   } else {
     Client &client = serv_.getClient(ev.ident);
     if (ev.filter == EVFILT_READ) {
-      if (!client.receive()) {
+      if (client.receive()) {
+        while (client.makeRequest()) {
+          requests_.push(client.getRequest());
+        }
+      } else {
         serv_.disconnect(client.getSocket());
-      }
-      while (client.makeRequest()) {
-        requests_.push(client.getRequest());
       }
     } else if (ev.filter == EVFILT_WRITE) {
       client.setWrite(true);

@@ -5,15 +5,18 @@ namespace irc {
 
 class Client {
  public:
-  Client() : auth_(), sock_(-1), len_(), can_write_() {
+  Client() : auth_(), sock_(-1), nick_("*"), user_("*"),
+             real_("*"), host_("*"), can_write_() {
     bzero(&addr_, sizeof(struct sockaddr_in));
   }
   ~Client() {}
 
   bool getAuth() const;
+  std::string const &getPassword() const;
   int getSocket() const;
   struct sockaddr_in const &getAddress() const;
   void setAuth(bool auth);
+  void setPassword(std::string const &password);
   void setSocket(int sock);
   void setAddress(struct sockaddr_in const &addr);
 
@@ -36,6 +39,7 @@ class Client {
 
  private:
   bool               auth_;
+  std::string        password_;
   int                sock_;
   struct sockaddr_in addr_;
 
