@@ -1,16 +1,14 @@
 #include "Channel.h"
 
 namespace irc {
-  // bool Channel::checkBan(std::string nick) const {
-  //   std::vector<std::string>::const_iterator iter;
-
-  //   for (iter = ban_nick_.begin(); iter != ban_nick_.end(); ++iter) {
-  //     if (iter == nick) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }
+  bool Channel::checkBan(std::string nick) const {
+    for (size_t i = 0; i != ban_nick_.size(); ++i) {
+      if (ban_nick_[i] == nick) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   void Channel::inputOp(std::string nick) {
     op_nick_.push_back(nick);
@@ -50,6 +48,15 @@ namespace irc {
 
   void Channel::setPassword(std::string password) {
     password_ = password;
+  }
+
+  std::vector<std::string> Channel::getChNick() const {
+    return ch_nick_;
+  }
+
+  void Channel::Channelout(std::string nick) {
+    outputCh(nick);
+    outputOp(nick);
   }
 
 }

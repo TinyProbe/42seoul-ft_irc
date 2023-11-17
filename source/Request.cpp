@@ -2,17 +2,29 @@
 
 namespace irc {
   int Request::getRequestCode() const {
-    if (type_.find("USER") != std::string::npos) {
+    if (Command::command(type_) == "USER") {
       return 1;
     }
-    if (type_.find("JOIN") != std::string::npos) {
+    if (Command::command(type_) == "JOIN") {
       return 2;
     }
-    if (type_.find("NICK") != std::string::npos) {
+    if (Command::command(type_) == "NICK") {
       return 3;
     }
-    if (type_.find("PRIVMSG") != std::string::npos) {
+    if (Command::command(type_) == "PRIVMSG") {
       return 4;
+    }
+    if (Command::command(type_) == "KICK") {
+      return 5;
+    }
+    if (Command::command(type_) == "PART") {
+      return 6;
+    }
+    if (Command::command(type_) == "QUIT") {
+      return 7;
+    }
+    if (Command::command(type_) == "TOPIC") {
+      return 9;
     }
     return 0;
   }

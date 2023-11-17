@@ -2,8 +2,11 @@
 #define IRCSERV_REQUEST_H_
 
 #include <iostream>
+#include "Command.h"
 
 namespace irc {
+
+class Command;
 
 class Request {
  public:

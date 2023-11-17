@@ -13,17 +13,19 @@ class Channel {
   :password_(password) {}
   ~Channel() {}
 
-  // bool checkBan(std::string nick) const;
+  bool checkBan(std::string nick) const;
   void inputOp(std::string nick);
   void outputOp(std::string nick);
   void inputCh(std::string nick);
   void outputCh(std::string nick);
   void inputBan(std::string nick);
   void outputBan(std::string nick);
+  std::vector<std::string> getChNick() const;
   std::string getTopic() const;
   void setTopic(std::string topic);
   std::string getPassword() const;
   void setPassword(std::string password);
+  void Channelout(std::string nick);
 
  private:
   std::vector<std::string> op_nick_;

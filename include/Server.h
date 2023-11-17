@@ -14,7 +14,6 @@
 namespace irc {
 
 typedef std::map<int, Client> Connections;
-typedef std::map<std::string, int> NickToSocket;
 typedef std::map<std::string, Channel> SevChannel;
 
 class Server {
@@ -35,13 +34,17 @@ class Server {
   int samename(std::string nickname) const;
   bool setChannel(std::string name, std::string password, std::string nick);
   Channel &getChannel(std::string name);
+  bool canChannel(std::string name);
+  void mangeCh(std::string name);
+  int nicktosocket(std::string nick);
+  std::string getChTopic(std::string chname);
+  void setChTopic(std::string chname, std::string topic);
 
  private:
   int port_;
   int server_socket_;
   std::string password_;
   Connections connections_;
-  NickToSocket nick_to_socket_;
   SevChannel sev_channel_;
 };
 

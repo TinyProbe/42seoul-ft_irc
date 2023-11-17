@@ -11,6 +11,7 @@
 #include "ResponsePool.h"
 #include "RequestPool.h"
 #include "Command.h"
+#include <vector>
 #include <unistd.h>
 #include <cstring>
 
@@ -18,6 +19,11 @@
 #define JOIN 2
 #define NICK 3
 #define PRIVMSG 4
+#define KICK 5
+#define PART 6
+#define QUIT 7
+#define EXIT 8
+#define TOPIC 9
 
 namespace irc {
 

@@ -125,4 +125,41 @@ Channel &Server::getChannel(std::string name) {
   return sev_channel_[name];
 }
 
+bool Server::canChannel(std::string name) {
+  if (sev_channel_.find(name) != sev_channel_.end()) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void Server::mangeCh(std::string name) {
+  std::vector<std::string> ch_nick_ = sev_channel_[name].getChNick();
+
+  if (ch_nick_.size() == 0) {
+    sev_channel_.erase(name);
+    std::cout << "channel size " << sev_channel_.size() << std::endl;
+  }
+}
+
+int Server::nicktosocket(std::string nick) {
+  Connections::const_iterator iter;
+
+  for (iter = connections_.begin(); iter != connections_.end(); ++iter) {
+    if (iter->second.getNickname() == nick) {
+      return iter->first;
+    }
+  }
+  return 0;
+}
+
+std::string Server::getChTopic(std::string chname) {
+  return sev_channel_[chname].getTopic();
+}
+
+void Server::setChTopic(std::string chname, std::string topic) {
+  sev_channel_[chname].setTopic(topic);
+}
+
 }
