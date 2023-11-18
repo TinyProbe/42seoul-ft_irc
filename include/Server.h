@@ -29,8 +29,7 @@ class Server {
   void disconnect(int sock);
   void disconnect(std::string const &nick);
 
-  std::vector<Response> const &response(Request const &req);
-  bool perform(Response const &res);
+  void response(Request const &req, RequestPool &requests);
 
  private:
   int         sock_;
@@ -42,8 +41,7 @@ class Server {
   NickToSock nick_to_sock_;
   ChannelMap channel_map_;
 
-  RequestCallback  request_callback_;
-  ResponseCallback response_callback_;
+  RequestCallback request_callback_;
 };
 
 } // namespace irc

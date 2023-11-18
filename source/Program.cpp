@@ -34,22 +34,21 @@ void Program::init(int argc, char **argv) {
 void Program::loop() {
   struct kevent ev;
   Request req;
-  Response res;
-  int size;
   while (true) {
     serv_.preProcess();
+    // create Request
     while (events_.pollEvent(ev)) { request(ev); }
-    while (requests_.pollRequest(req)) { response(req); }
-    size = responses_.getSize();
+    // response and create derived request
+    int size = requests_.getSize();
     while (size--) {
-      responses_.pollResponse(res);
-      perform(res);
+      requests_.pollRequest(req);
+      response(req, requests_);
     }
   }
 }
 
 void Program::request(struct kevent const &ev) {
-  if (ev.flags & EV_ERROR) {
+  if (ev.flags & EV_ERROR) { // error process
     if (static_cast<int>(ev.ident) == serv_.getSocket()) {
       throw std::runtime_error(std::string("event: server: ") +
                                std::string(strerror(errno)));
@@ -61,14 +60,14 @@ void Program::request(struct kevent const &ev) {
     return;
   }
 
-  if (static_cast<int>(ev.ident) == serv_.getSocket()) {
+  if (static_cast<int>(ev.ident) == serv_.getSocket()) { // server
     if (ev.filter == EVFILT_READ) {
       int sock = serv_.accept();
       events_.changeEvent(sock, EVFILT_READ, EV_ADD);
       events_.changeEvent(sock, EVFILT_WRITE, EV_ADD);
       events_.setCapacity(serv_.getConnection().size() * 2 + 5);
     }
-  } else {
+  } else { // client
     Client &client = serv_.getClient(ev.ident);
     if (ev.filter == EVFILT_READ) {
       if (client.receive()) {
@@ -85,14 +84,8 @@ void Program::request(struct kevent const &ev) {
 }
 
 void Program::response(Request const &req) {
-  std::vector<Response> const &ress = serv_.response(req);
-  for (int i = 0; i < ress.size(); ++i) {
-    responses_.push(ress[i]);
-  }
-}
-
-void Program::perform(Response const &res) {
-  if (!serv_.perform(res)) { responses_.push(res); }
+  try { serv_.response(req, requests_); }
+  catch (...) { requests_.push(req); }
 }
 
 } // namespace irc

@@ -4,11 +4,9 @@ namespace irc {
 
 static int const kMaxBacklog = 128;
 
-Server::Server()
-    : sock_(-1),
-      port_(-1),
-      request_callback_(*this),
-      response_callback_(*this) {
+Server::Server() : sock_(-1),
+                   port_(-1),
+                   request_callback_(*this) {
   int sock = socket(PF_INET, SOCK_STREAM, 0);
   if (sock == -1) {
     throw std::runtime_error(std::string("socket: ") +
@@ -186,7 +184,7 @@ int Server::accept() {
                              std::string(strerror(errno)));
   }
 
-  Client &client = connection_[client_sock]
+  Client &client = connection_[client_sock];
   client.setSocket(client_sock);
   client.setAddress(client_addr);
   return client_sock;
@@ -198,6 +196,11 @@ void Server::disconnect(int sock) {
     close(it->first);
     nick_to_sock_.erase(it->second.getNickname());
     connection_.erase(it);
+
+    ChannelMap::iterator i;
+    for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
+      i->second.disconnect(sock);
+    }
   }
 }
 
@@ -207,15 +210,16 @@ void Server::disconnect(std::string const &nick) {
     close(it->second);
     connection_.erase(it->second);
     nick_to_sock_.erase(it);
+
+    ChannelMap::iterator i;
+    for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
+      i->second.disconnect(nick);
+    }
   }
 }
 
-std::vector<Response> const &Server::response(Request const &req) {
-  return request_callback_(req);
-}
-
-bool Server::perform(Response const &res) {
-  return response_callback_(res);
+void Server::response(Request const &req, RequestPool &requests) {
+  request_callback_(req, requests);
 }
 
 } // namespace irc

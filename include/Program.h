@@ -15,12 +15,10 @@ class Program {
   void loop();
   void request(struct kevent const &ev);
   void response(Request const &req);
-  void perform(Response const &res);
 
   Server       serv_;
   EventPool    events_;
   RequestPool  requests_;
-  ResponsePool responses_;
 };
 
 } // namespace irc

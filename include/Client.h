@@ -3,6 +3,8 @@
 
 namespace irc {
 
+typedef std::unordered_map<std::string, bool> JoinChannel;
+
 class Client {
  public:
   Client() : auth_(), sock_(-1), nick_("*"), user_("*"),
@@ -28,10 +30,15 @@ class Client {
   void setUser(std::string const &user);
   void setReal(std::string const &real);
   void setHost(std::string const &host);
+  std::string getIdentify() const;
 
   std::string &getBuffer() const;
   bool canWrite() const;
   void setWrite(bool can_write);
+
+  JoinChannel const &getJoinChannel() const;
+  void join(std::string const &channel);
+  bool isJoined(std::string const &channel) const;
 
   bool receive();
   bool makeRequest();
@@ -51,7 +58,11 @@ class Client {
   std::string buffer_;
   bool        can_write_;
 
+  JoinChannel join_channel_;
+
   Request request_;
+
+  static const int kMaxChannel;
 };
 
 } // namespace irc

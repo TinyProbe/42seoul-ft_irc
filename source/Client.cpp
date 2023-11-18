@@ -2,6 +2,7 @@
 
 namespace irc {
 
+static int const Client::kMaxChannel = 50;
 static int const kMaxBuffer = (1 << 20);
 
 bool Client::getAuth() const {
@@ -75,6 +76,10 @@ void Client::setHost(std::string const &host) {
   host_ = host;
 }
 
+std::string Server::getIdentify() const {
+  return nick_ + "!" + user_ + "@" + host_;
+}
+
 std::string &Client::getBuffer() const {
   return buffer_;
 }
@@ -85,6 +90,22 @@ bool Client::canWrite() const {
 
 void Client::setWrite(bool can_write) {
   can_write_ = can_write;
+}
+
+JoinChannel const &Client::getJoinChannel() const {
+  return join_channel_;
+}
+
+void Client::join(std::string const &channel) {
+  join_channel_[channel] = true;
+}
+
+bool Client::isJoined(std::string const &channel) const {
+  JoinChannel::iterator it = join_channel_.find(channel);
+  if (it != join_channel_.end()) {
+    return true;
+  }
+  return false;
 }
 
 bool Client::receive() {
