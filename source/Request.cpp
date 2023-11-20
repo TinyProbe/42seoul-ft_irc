@@ -68,4 +68,17 @@ namespace irc {
     }
   }
 
+  bool Request::isDerived()const {
+    return derive_;
+  }
+
+  Request &Request::operator= (const Request &other) {
+    if (this != &other) {
+      command_ = other.command_;
+      code_ = other.code_;
+      param_ = other.param_;
+      socket_ = other.socket_;
+      derive_ = other.derive_
+    }
+  }
 } // namespace irc

@@ -8,6 +8,7 @@ class Request {
   Request() {}
   ~Request() {}
 
+  Request &operator= (const Request &other);
   Request(std::string buffer, int socket);
   int getRequestCode() const;
   int getRequesterSocket() const;
@@ -15,6 +16,7 @@ class Request {
   std::string getCommand() const;
   std::vector<std::string> getParam() const;
   int seperate(std::string command);
+  bool isDerived() const;
 
   static const int kUnknown = 0;
   static const int kPass    = 1;
@@ -31,11 +33,11 @@ class Request {
   static const int kCount   = 12;
 
  private:
-  std::string command_;ring> param_;
+  std::string command_;
   int code_;
-  std::vector<std::st
+  std::vector<std::string> param_;
   int socket_;
-  bool derive;
+  bool derive_;
 };
 
 } // namespace irc

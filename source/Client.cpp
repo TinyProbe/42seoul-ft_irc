@@ -86,16 +86,18 @@ bool Client::receive() {
     }
     buf[std::max(len, 0)] = '\0';
     buffer_ += buf;
+    memset(buf, 0, kMaxBuffer);
     if (len < kMaxBuffer) { return true; }
   }
 }
 
 bool Client::makeRequest() {
   if (buffer_.size() == 0) { return false; }
-  request_.clear();
-
-  // ...
-
+  if (buffer_.find("\r\n")) {
+    Request request(buffer_, sock_);
+    request_ = request;
+    buffer_.clear();
+  }
   return true;
 }
 
