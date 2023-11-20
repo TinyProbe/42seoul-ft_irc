@@ -32,11 +32,11 @@ class Client {
   void setHost(std::string const &host);
   std::string getIdentify() const;
 
-  std::string &getBuffer() const;
+  std::string &getBuffer();
   bool canWrite() const;
   void setWrite(bool can_write);
 
-  JoinChannel const &getJoinChannel() const;
+  JoinChannel const &getJoinChannel();
   void join(std::string const &channel);
   void part(std::string const &channel);
   bool isJoined(std::string const &channel) const;

@@ -14,11 +14,11 @@ class Server {
 
   int getSocket() const;
   std::string const &getHost() const;
-  Connection &getConnection() const;
-  NickToSock &getNickToSock() const;
-  ChannelMap &getChannelMap() const;
-  Client &getClient(int sock) const;
-  Client &getClient(std::string const &nick) const;
+  Connection &getConnection();
+  NickToSock &getNickToSock();
+  ChannelMap &getChannelMap();
+  Client &getClient(int sock);
+  Client &getClient(std::string const &nick);
   void setPort(int port);
   void setPassword(std::string const &password);
   bool verify(std::string const &password) const;

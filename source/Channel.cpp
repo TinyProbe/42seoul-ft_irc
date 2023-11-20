@@ -2,13 +2,9 @@
 
 namespace irc {
 
-std::string const &Channel::getName() const {
-  return name_;
-}
+std::string const &Channel::getName() const { return name_; }
 
-void Channel::setName(std::string const &name) {
-  name_ = name;
-}
+void Channel::setName(std::string const &name) { name_ = name; }
 
 void Channel::ban(std::string const &nick) {
   part(nick);
@@ -16,16 +12,16 @@ void Channel::ban(std::string const &nick) {
 }
 
 bool Channel::isBanned(std::string const &nick) const {
-  return ban_list_[nick];
+  if (ban_list_.find(nick) == ban_list_.end()) {
+    return false;
+  }
+  return true;
 }
 
-Joined &Channel::getJoined() const {
-  return joined_;
-}
+Joined &Channel::getJoined() { return joined_; }
 
 bool Channel::isJoined(std::string const &nick) const {
-  Connection2::iterator it = joined_.find(nick);
-  if (it == joined_.end()) {
+  if (joined_.find(nick) == joined_.end()) {
     return false;
   }
   return true;
@@ -36,26 +32,17 @@ bool Channel::join(std::string const &nick) {
   return (joined_[nick] = true);
 }
 
-void Channel::part(std::string const &nick) {
-  joined_.erase(nick);
-}
+void Channel::part(std::string const &nick) { joined_.erase(nick); }
 
-void Channel::setOrigin(std::string const &nick) {
-  origin_ = nick;
-}
+void Channel::setOrigin(std::string const &nick) { origin_ = nick; }
 
-void Channel::addOperator(std::string const &nick) {
-  operator_[nick] = true;
-}
+void Channel::addOperator(std::string const &nick) { operator_[nick] = true; }
 
-void Channel::delOperator(std::string const &nick) {
-  operator_.erase(nick);
-}
+void Channel::delOperator(std::string const &nick) { operator_.erase(nick); }
 
 int Channel::isOperator(std::string const &nick) {
   if (origin_ == nick) { return 1; }
-  Operator::iterator it = operator_.find(nick);
-  if (it != operator_.end()) { return 2; }
+  if (operator_.find(nick) != operator_.end()) { return 2; }
   return 0;
 }
 
@@ -71,7 +58,9 @@ void Channel::setInviteOnly(bool invite_only) { invite_only_ = invite_only; }
 
 void Channel::setOperTopic(bool oper_topic) { oper_topic_ = oper_topic; }
 
-void Channel::setHasPassword(bool has_password) { has_password_ = has_password; }
+void Channel::setHasPassword(bool has_password) {
+  has_password_ = has_password;
+}
 
 void Channel::setUserLimit(bool user_limit) { user_limit_ = user_limit; }
 
@@ -92,12 +81,8 @@ void Channel::setPassword(std::string const &password) {
   password_ = password;
 }
 
-size_t Channel::getLimit() const {
-  return limit_;
-}
+std::size_t Channel::getLimit() const { return limit_; }
 
-void Channel::setLimit(size_t limit) {
-  limit_ = limit;
-}
+void Channel::setLimit(std::size_t limit) { limit_ = limit; }
 
 } // namespace irc

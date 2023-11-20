@@ -11,7 +11,7 @@ class Channel {
  public:
   Channel() : invite_only_(),
               oper_topic_(),
-              has_password(),
+              has_password_(),
               user_limit_(),
               limit_() {}
   ~Channel() {}
@@ -22,7 +22,7 @@ class Channel {
   void ban(std::string const &nick);
   bool isBanned(std::string const &nick) const;
 
-  Joined &getJoined() const;
+  Joined &getJoined();
   bool isJoined(std::string const &nick) const;
   bool join(std::string const &nick);
   void part(std::string const &nick);
@@ -43,8 +43,8 @@ class Channel {
 
   bool verify(std::string const &password) const;
   void setPassword(std::string const &password);
-  size_t getLimit() const;
-  void setLimit(size_t limit);
+  std::size_t getLimit() const;
+  void setLimit(std::size_t limit);
 
  private:
   std::string name_;
@@ -60,7 +60,7 @@ class Channel {
   bool        has_password_;
   bool        user_limit_;
   std::string password_;
-  size_t      limit_;
+  std::size_t limit_;
 };
 
 } // namespace irc

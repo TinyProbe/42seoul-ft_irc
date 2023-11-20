@@ -52,27 +52,17 @@ Server::Server() : sock_(-1),
   close(sock);
 }
 
-int Server::getSocket() const {
-  return sock_;
-}
+int Server::getSocket() const { return sock_; }
 
-std::string const &Server::getHost() const {
-  return host_;
-}
+std::string const &Server::getHost() const { return host_; }
 
-Connections &Server::getConnection() const {
-  return connection_;
-}
+Connections &Server::getConnection() { return connection_; }
 
-NickToSock &Server::getNickToSock() const {
-  return nick_to_sock_;
-}
+NickToSock &Server::getNickToSock() { return nick_to_sock_; }
 
-ChannelMap &Server::getChannelMap() const {
-  return channel_map_;
-}
+ChannelMap &Server::getChannelMap() { return channel_map_; }
 
-Client &Server::getClient(int sock) const {
+Client &Server::getClient(int sock) {
   Connections::iterator it = connection_.find(sock);
   if (it == connection_.end()) {
     throw std::runtime_error(std::string("getClient: invalid key"));
@@ -80,7 +70,7 @@ Client &Server::getClient(int sock) const {
   return it->second;
 }
 
-Client &Server::getClient(std::string const &nick) const {
+Client &Server::getClient(std::string const &nick) {
   NickToSock::iterator it = nick_to_sock_.find(nick);
   if (it == nick_to_sock_.end()) {
     throw std::runtime_error(std::string("getClient: invalid key"));
@@ -151,7 +141,7 @@ void Server::standby() {
 }
 
 void Server::preProcess() {
-  static Connections::iterator i;
+  Connections::iterator i;
   for (i = connection_.begin(); i != connection_.end(); ++i) {
     i->second.setWrite(false);
   }

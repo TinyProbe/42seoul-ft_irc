@@ -80,7 +80,7 @@ std::string Server::getIdentify() const {
   return nick_ + "!" + user_ + "@" + host_;
 }
 
-std::string &Client::getBuffer() const {
+std::string &Client::getBuffer() {
   return buffer_;
 }
 

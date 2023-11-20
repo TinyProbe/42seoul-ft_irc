@@ -7,7 +7,7 @@ static void send_(Server &serv,
                   std::string const &msg,
                   std::string const &call_stack) {
   if (!client.canWrite()) {
-    throw std::runtime_error("Can't write to client");
+    throw std::runtime_error("can't write");
   }
   if (send(client.getSocket(),
            msg.c_str(),
@@ -104,7 +104,7 @@ void RequestCallback::operator()(Request const &req, RequestPool &requests) {
 void RequestCallback::unknown(Request const &req, RequestPool &requests) {
   Connection &connection = serv_.getConnection();
   Connection::iterator it = connection.find(req.getRequesterSocket());
-  if (it != connection.end()) {
+  if (it != connection.end()) { // ERR_UNKNOWNCOMMAND
     Client &client = it->second;
     std::string msg = std::string(":") + serv_.getHost() + " ";
     msg += "421 ";
