@@ -56,14 +56,14 @@ int Server::getSocket() const { return sock_; }
 
 std::string const &Server::getHost() const { return host_; }
 
-Connections &Server::getConnection() { return connection_; }
+UMint_Client &Server::getConnection() { return connection_; }
 
-NickToSock &Server::getNickToSock() { return nick_to_sock_; }
+UMstring_int &Server::getNickToSock() { return nick_to_sock_; }
 
-ChannelMap &Server::getChannelMap() { return channel_map_; }
+UMstring_Channel &Server::getChannelMap() { return channel_map_; }
 
 Client &Server::getClient(int sock) {
-  Connections::iterator it = connection_.find(sock);
+  UMint_Client::iterator it = connection_.find(sock);
   if (it == connection_.end()) {
     throw std::runtime_error(std::string("getClient: invalid key"));
   }
@@ -71,7 +71,7 @@ Client &Server::getClient(int sock) {
 }
 
 Client &Server::getClient(std::string const &nick) {
-  NickToSock::iterator it = nick_to_sock_.find(nick);
+  UMstring_int::iterator it = nick_to_sock_.find(nick);
   if (it == nick_to_sock_.end()) {
     throw std::runtime_error(std::string("getClient: invalid key"));
   }
@@ -84,9 +84,9 @@ void Server::setPort(int port) {
                              std::string(strerror(errno)));
   }
   port_ = port;
-  std::string::iterator it = host_.find(":");
-  if (it != host_.end()) {
-    host_.resize(it - host_.begin());
+  std::size_t pos = host_.find(':');
+  if (pos != std::string::npos) {
+    host_.resize(pos);
   }
   host_ += ':';
   host_ += std::to_string(port);
@@ -141,7 +141,7 @@ void Server::standby() {
 }
 
 void Server::preProcess() {
-  Connections::iterator i;
+  UMint_Client::iterator i;
   for (i = connection_.begin(); i != connection_.end(); ++i) {
     i->second.setWrite(false);
   }
@@ -181,13 +181,13 @@ int Server::accept() {
 }
 
 void Server::disconnect(int sock) {
-  Connection::iterator it = connection_.find(sock);
+  UMint_Client::iterator it = connection_.find(sock);
   if (it != connection_.end()) {
     close(it->first);
     nick_to_sock_.erase(it->second.getNickname());
     connection_.erase(it);
 
-    ChannelMap::iterator i;
+    UMstring_Channel::iterator i;
     for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
       i->second.disconnect(sock);
     }
@@ -195,13 +195,13 @@ void Server::disconnect(int sock) {
 }
 
 void Server::disconnect(std::string const &nick) {
-  NickToSock::iterator it = nick_to_sock_.find(nick);
+  UMstring_int::iterator it = nick_to_sock_.find(nick);
   if (it != nick_to_sock_.end()) {
     close(it->second);
     connection_.erase(it->second);
     nick_to_sock_.erase(it);
 
-    ChannelMap::iterator i;
+    UMstring_Channel::iterator i;
     for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
       i->second.disconnect(nick);
     }

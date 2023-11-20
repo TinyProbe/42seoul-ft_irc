@@ -5,33 +5,19 @@ namespace irc {
 static int const Client::kMaxChannel = 50;
 static int const kMaxBuffer = (1 << 20);
 
-bool Client::getAuth() const {
-  return auth_;
-}
+bool Client::getAuth() const { return auth_; }
 
-std::string const &Client::getPassword() const {
-  return password_;
-}
+std::string const &Client::getPassword() const { return password_; }
 
-int Client::getSocket() const {
-  return sock_;
-}
+int Client::getSocket() const { return sock_; }
 
-struct sockaddr_in const &Client::getAddress() const {
-  return addr_;
-}
+struct sockaddr_in const &Client::getAddress() const { return addr_; }
 
-void Client::setAuth(bool auth) {
-  auth_ = auth;
-}
+void Client::setAuth(bool auth) { auth_ = auth; }
 
-void Client::setPassword(std::string const &password) {
-  password_ = password;
-}
+void Client::setPassword(std::string const &password) { password_ = password; }
 
-void Client::setSocket(int sock) {
-  sock_ = sock;
-}
+void Client::setSocket(int sock) { sock_ = sock; }
 
 void Client::setAddress(struct sockaddr_in const &addr) {
   addr_ = addr;
@@ -44,69 +30,44 @@ void Client::setAddress(struct sockaddr_in const &addr) {
   host_ += std::to_string(port);
 }
 
-std::string const &Client::getNick() const {
-  return nick_;
-}
+std::string const &Client::getNick() const { return nick_; }
 
-std::string const &Client::getUser() const {
-  return user_;
-}
+std::string const &Client::getUser() const { return user_; }
 
-std::string const &Client::getReal() const {
-  return real_;
-}
+std::string const &Client::getReal() const { return real_; }
 
-std::string const &Client::getHost() const {
-  return host_;
-}
+std::string const &Client::getHost() const { return host_; }
 
-void Client::setNick(std::string const &nick) {
-  nick_ = nick;
-}
+void Client::setNick(std::string const &nick) { nick_ = nick; }
 
-void Client::setUser(std::string const &user) {
-  user_ = user;
-}
+void Client::setUser(std::string const &user) { user_ = user; }
 
-void Client::setReal(std::string const &real) {
-  real_ = real;
-}
+void Client::setReal(std::string const &real) { real_ = real; }
 
-void Client::setHost(std::string const &host) {
-  host_ = host;
-}
+void Client::setHost(std::string const &host) { host_ = host; }
 
 std::string Server::getIdentify() const {
   return nick_ + "!" + user_ + "@" + host_;
 }
 
-std::string &Client::getBuffer() {
-  return buffer_;
-}
+std::string &Client::getBuffer() { return buffer_; }
 
-bool Client::canWrite() const {
-  return can_write_;
-}
+bool Client::canWrite() const { return can_write_; }
 
-void Client::setWrite(bool can_write) {
-  can_write_ = can_write;
-}
+void Client::setWrite(bool can_write) { can_write_ = can_write; }
 
-JoinChannel const &Client::getJoinChannel() const {
-  return join_channel_;
-}
+JoinedChannel const &Client::getJoinedChannel() const { return joined_channel_; }
 
 void Client::join(std::string const &channel) {
-  join_channel_[channel] = true;
+  joined_channel_[channel] = true;
 }
 
 void Client::part(std::string const &channel) {
-  join_channel_.erase(channel);
+  joined_channel_.erase(channel);
 }
 
 bool Client::isJoined(std::string const &channel) const {
-  JoinChannel::iterator it = join_channel_.find(channel);
-  if (it != join_channel_.end()) {
+  if (joined_channel_.find(channel) != joined_channel_.end()) {
     return true;
   }
   return false;
@@ -138,8 +99,6 @@ bool Client::makeRequest() {
   return true;
 }
 
-Request const &Client::getRequest() const {
-  return request_;
-}
+Request const &Client::getRequest() const { return request_; }
 
 } // namespace irc

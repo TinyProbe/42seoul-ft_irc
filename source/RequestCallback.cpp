@@ -238,7 +238,7 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
     if (!verify(serv_, client)) { return; }
     std::vector<std::string> const &param = req.getParam();
     std::string msg = std::string(":") + serv_.getHost() + " ";
-    Channel const &channel = serv_.getChannelMap()[param[0]];
+    Channel &channel = serv_.getChannelMap()[param[0]];
     if (req.isDerived()) { // derived request
       msg  = std::string(":") + client.getIdentify() + " ";
       msg += res.getCommand() + " ";
@@ -262,8 +262,8 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
       msg += "475 ";
       msg += param[0] + " ";
       msg += ":Cannot join channel (+k)\r\n";
-    } else if (channel.getConnection().size() >= channel.getLimit()) {
-                                                        // ERR_CHANNELISFULL
+    } else if (channel.getHasLimit() &&
+        channel.getJoined().size() >= channel.getLimit()) { // ERR_CHANNELISFULL
       msg += "471 ";
       msg += param[0] + " ";
       msg += ":Cannot join channel (+l)\r\n";
@@ -293,9 +293,9 @@ void RequestCallback::names(Request const &req, RequestPool &requests) {
       msg += "353 ";
       msg += std::string("= ") + param[0] + " ";
       msg += ":";
-      Channel const &channel = serv_.getChannelMap()[param[0]];
-      Connection const &connection = channel.getConnection();
-      Connection::iterator i;
+      Channel &channel = serv_.getChannelMap()[param[0]];
+      Joined &joined = channel.getJoined();
+      Joined::iterator i;
       for (i = connection.begin(); i != connection.end(); ++i) {
         std::string const &nick = i->second.getNick();
         if (channel.isOperator(nick) == 1) { msg += "@"; }

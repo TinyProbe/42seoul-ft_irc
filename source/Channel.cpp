@@ -12,27 +12,27 @@ void Channel::ban(std::string const &nick) {
 }
 
 bool Channel::isBanned(std::string const &nick) const {
-  if (ban_list_.find(nick) == ban_list_.end()) {
-    return false;
+  if (ban_list_.find(nick) != ban_list_.end()) {
+    return true;
   }
-  return true;
+  return false;
 }
 
-Joined &Channel::getJoined() { return joined_; }
+UMstring_bool &Channel::getJoinedClient() { return joined_client_; }
 
 bool Channel::isJoined(std::string const &nick) const {
-  if (joined_.find(nick) == joined_.end()) {
-    return false;
+  if (joined_client_.find(nick) != joined_client_.end()) {
+    return true;
   }
-  return true;
+  return false;
 }
 
 bool Channel::join(std::string const &nick) {
   if (isBanned(nick)) { return false; }
-  return (joined_[nick] = true);
+  return joined_client_[nick] = true;
 }
 
-void Channel::part(std::string const &nick) { joined_.erase(nick); }
+void Channel::part(std::string const &nick) { joined_client_.erase(nick); }
 
 void Channel::setOrigin(std::string const &nick) { origin_ = nick; }
 
@@ -52,7 +52,7 @@ bool Channel::getOperTopic() const { return oper_topic_; }
 
 bool Channel::getHasPassword() const { return has_password_; }
 
-bool Channel::getUserLimit() const { return user_limit_; }
+bool Channel::getHasLimit() const { return has_limit_; }
 
 void Channel::setInviteOnly(bool invite_only) { invite_only_ = invite_only; }
 
@@ -62,7 +62,7 @@ void Channel::setHasPassword(bool has_password) {
   has_password_ = has_password;
 }
 
-void Channel::setUserLimit(bool user_limit) { user_limit_ = user_limit; }
+void Channel::setHasLimit(bool has_limit) { has_limit_ = has_limit; }
 
 bool Channel::verify(std::string const &password) const {
   return password_ == password;
