@@ -1,38 +1,64 @@
 #ifndef IRCSERV_CHANNEL_H_
 #define IRCSERV_CHANNEL_H_
 
-#include <iostream>
-#include <vector>
-
 namespace irc {
+
+typedef std::unordered_map<std::string, bool> UMstring_bool;
 
 class Channel {
  public:
-  Channel() {}
-  Channel(std::string password)
-  :password_(password) {}
+  Channel() : invite_only_(),
+              oper_topic_(),
+              has_password_(),
+              user_limit_(),
+              limit_() {}
   ~Channel() {}
 
-  bool checkBan(std::string nick) const;
-  void inputOp(std::string nick);
-  void outputOp(std::string nick);
-  void inputCh(std::string nick);
-  void outputCh(std::string nick);
-  void inputBan(std::string nick);
-  void outputBan(std::string nick);
-  std::vector<std::string> getChNick() const;
-  std::string getTopic() const;
-  void setTopic(std::string topic);
-  std::string getPassword() const;
-  void setPassword(std::string password);
-  void Channelout(std::string nick);
+  std::string const &getName() const;
+  void setName(std::string const &name);
+
+  void ban(std::string const &nick);
+  bool isBanned(std::string const &nick) const;
+
+  UMstring_bool &getJoinedClient();
+  bool isJoined(std::string const &nick) const;
+  bool join(std::string const &nick);
+  void part(std::string const &nick);
+
+  void setOrigin(std::string const &nick);
+  void addOperator(std::string const &nick);
+  void delOperator(std::string const &nick);
+  int isOperator(std::string const &nick);
+
+  bool getInviteOnly() const;
+  bool getOperTopic() const;
+  bool getHasPassword() const;
+  bool getHasLimit() const;
+  void setInviteOnly(bool invite_only);
+  void setOperTopic(bool oper_topic);
+  void setHasPassword(bool has_password);
+  void setHasLimit(bool has_limit);
+
+  bool verify(std::string const &password) const;
+  void setPassword(std::string const &password);
+  std::size_t getLimit() const;
+  void setLimit(std::size_t limit);
 
  private:
-  std::vector<std::string> op_nick_;
-  std::vector<std::string> ch_nick_;
-  std::vector<std::string> ban_nick_;
+  std::string name_;
+
+  UMstring_bool joined_client_;
+  UMstring_bool ban_list_;
+
+  std::string   origin_;
+  UMstring_bool operator_;
+
+  bool        invite_only_;
+  bool        oper_topic_;
+  bool        has_password_;
+  bool        has_limit_;
   std::string password_;
-  std::string topic_;
+  std::size_t limit_;
 };
 
 } // namespace irc

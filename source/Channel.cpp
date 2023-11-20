@@ -1,62 +1,88 @@
 #include "Channel.h"
 
 namespace irc {
-  bool Channel::checkBan(std::string nick) const {
-    for (size_t i = 0; i != ban_nick_.size(); ++i) {
-      if (ban_nick_[i] == nick) {
-        return true;
-      }
-    }
-    return false;
-  }
 
-  void Channel::inputOp(std::string nick) {
-    op_nick_.push_back(nick);
-  }
+std::string const &Channel::getName() const { return name_; }
 
-  void Channel::outputOp(std::string nick) {
-    op_nick_.erase(std::remove(op_nick_.begin(), op_nick_.end(), nick), op_nick_.end());
-  }
+void Channel::setName(std::string const &name) { name_ = name; }
 
-  void Channel::inputCh(std::string nick) {
-    ch_nick_.push_back(nick);
-  }
-
-  void Channel::outputCh(std::string nick) {
-    ch_nick_.erase(std::remove(ch_nick_.begin(), ch_nick_.end(), nick), ch_nick_.end());
-  }
-
-  void Channel::inputBan(std::string nick) {
-    ban_nick_.push_back(nick);
-  }
-
-  void Channel::outputBan(std::string nick) {
-    ban_nick_.erase(std::remove(ban_nick_.begin(), ban_nick_.end(), nick), ban_nick_.end());
-  }
-
-  std::string Channel::getTopic() const {
-    return topic_;
-  }
-
-  void Channel::setTopic(std::string topic) {
-    topic_ = topic;
-  }
-
-  std::string Channel::getPassword() const {
-    return password_;
-  }
-
-  void Channel::setPassword(std::string password) {
-    password_ = password;
-  }
-
-  std::vector<std::string> Channel::getChNick() const {
-    return ch_nick_;
-  }
-
-  void Channel::Channelout(std::string nick) {
-    outputCh(nick);
-    outputOp(nick);
-  }
-
+void Channel::ban(std::string const &nick) {
+  part(nick);
+  ban_list_[nick] = true;
 }
+
+bool Channel::isBanned(std::string const &nick) const {
+  if (ban_list_.find(nick) != ban_list_.end()) {
+    return true;
+  }
+  return false;
+}
+
+UMstring_bool &Channel::getJoinedClient() { return joined_client_; }
+
+bool Channel::isJoined(std::string const &nick) const {
+  if (joined_client_.find(nick) != joined_client_.end()) {
+    return true;
+  }
+  return false;
+}
+
+bool Channel::join(std::string const &nick) {
+  if (isBanned(nick)) { return false; }
+  return joined_client_[nick] = true;
+}
+
+void Channel::part(std::string const &nick) { joined_client_.erase(nick); }
+
+void Channel::setOrigin(std::string const &nick) { origin_ = nick; }
+
+void Channel::addOperator(std::string const &nick) { operator_[nick] = true; }
+
+void Channel::delOperator(std::string const &nick) { operator_.erase(nick); }
+
+int Channel::isOperator(std::string const &nick) {
+  if (origin_ == nick) { return 1; }
+  if (operator_.find(nick) != operator_.end()) { return 2; }
+  return 0;
+}
+
+bool Channel::getInviteOnly() const { return invite_only_; }
+
+bool Channel::getOperTopic() const { return oper_topic_; }
+
+bool Channel::getHasPassword() const { return has_password_; }
+
+bool Channel::getHasLimit() const { return has_limit_; }
+
+void Channel::setInviteOnly(bool invite_only) { invite_only_ = invite_only; }
+
+void Channel::setOperTopic(bool oper_topic) { oper_topic_ = oper_topic; }
+
+void Channel::setHasPassword(bool has_password) {
+  has_password_ = has_password;
+}
+
+void Channel::setHasLimit(bool has_limit) { has_limit_ = has_limit; }
+
+bool Channel::verify(std::string const &password) const {
+  return password_ == password;
+}
+
+void Channel::setPassword(std::string const &password) {
+  if (password.size() < 6 || password.size() > 16) {
+    throw std::runtime_error(std::string("password: 6 <= password <= 16"));
+  }
+  for (int i = 0; i < password.size(); ++i) {
+    if (!isprint(password[i])) {
+      throw std::runtime_error(
+          std::string("password: format error(unprintable)"));
+    }
+  }
+  password_ = password;
+}
+
+std::size_t Channel::getLimit() const { return limit_; }
+
+void Channel::setLimit(std::size_t limit) { limit_ = limit; }
+
+} // namespace irc

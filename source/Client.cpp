@@ -2,96 +2,103 @@
 
 namespace irc {
 
-std::string Client::getNickname() const {
-  return nickname_;
+static int const Client::kMaxChannel = 50;
+static int const kMaxBuffer = (1 << 20);
+
+bool Client::getAuth() const { return auth_; }
+
+std::string const &Client::getPassword() const { return password_; }
+
+int Client::getSocket() const { return sock_; }
+
+struct sockaddr_in const &Client::getAddress() const { return addr_; }
+
+void Client::setAuth(bool auth) { auth_ = auth; }
+
+void Client::setPassword(std::string const &password) { password_ = password; }
+
+void Client::setSocket(int sock) { sock_ = sock; }
+
+void Client::setAddress(struct sockaddr_in const &addr) {
+  addr_ = addr;
+  int ip = ntohl(addr.sin_addr.s_addr);
+  int port = ntohs(addr.sin_port);
+  host_  = std::to_string(((unsigned char *) &ip)[3]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[2]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[1]) + '.';
+  host_ += std::to_string(((unsigned char *) &ip)[0]) + ':';
+  host_ += std::to_string(port);
 }
 
-void Client::receive(int socket) {
-  char buf[MAX_BUF];
-  
-  socket_ = socket;
-  if (recv(socket, buf, MAX_BUF, MSG_DONTWAIT) == -1) {
-    throw std::runtime_error(std::string("recv() error\n") + 
-                             std::string(strerror(errno)));
-  }
-  if (receive_.find("\r\n")) {
-    receive_.clear();
-  }
-  receive_ += buf;
-  std::cout << "receive : "<< buf;
-  memset(buf, 0, MAX_BUF);
+std::string const &Client::getNick() const { return nick_; }
+
+std::string const &Client::getUser() const { return user_; }
+
+std::string const &Client::getReal() const { return real_; }
+
+std::string const &Client::getHost() const { return host_; }
+
+void Client::setNick(std::string const &nick) { nick_ = nick; }
+
+void Client::setUser(std::string const &user) { user_ = user; }
+
+void Client::setReal(std::string const &real) { real_ = real; }
+
+void Client::setHost(std::string const &host) { host_ = host; }
+
+std::string Server::getIdentify() const {
+  return nick_ + "!" + user_ + "@" + host_;
 }
 
-bool Client::canRequest() const {
-  if (!receive_.find("\r\n")) { return false; }
-  if (nickname_.empty() || usrname_.empty()) { return false; }
+std::string &Client::getBuffer() { return buffer_; }
+
+bool Client::canWrite() const { return can_write_; }
+
+void Client::setWrite(bool can_write) { can_write_ = can_write; }
+
+JoinedChannel const &Client::getJoinedChannel() const { return joined_channel_; }
+
+void Client::join(std::string const &channel) {
+  joined_channel_[channel] = true;
+}
+
+void Client::part(std::string const &channel) {
+  joined_channel_.erase(channel);
+}
+
+bool Client::isJoined(std::string const &channel) const {
+  if (joined_channel_.find(channel) != joined_channel_.end()) {
+    return true;
+  }
+  return false;
+}
+
+bool Client::receive() {
+  static char buf[kMaxBuffer + 1];
+  static int len;
+  buffer_.clear();
+  while (true) {
+    len = recv(sock_, buf, kMaxBuffer, MSG_DONTWAIT | MSG_NOSIGNAL);
+    if (len == -1 && errno != EAGAIN) {
+      std::cerr << std::string("recv: ") +
+                   std::string(strerror(errno)) << std::endl;
+      return false;
+    }
+    buf[std::max(len, 0)] = '\0';
+    buffer_ += buf;
+    if (len < kMaxBuffer) { return true; }
+  }
+}
+
+bool Client::makeRequest() {
+  if (buffer_.size() == 0) { return false; }
+  request_.clear();
+
+  // ...
+
   return true;
 }
 
-Request Client::createRequest() {
-  std::cout << "createmessage  " << receive_ << std::endl;
-  return Request(receive_, nickname_, usrname_, socket_);
-}
+Request const &Client::getRequest() const { return request_; }
 
-void Client::setWrite(bool value) {
-  write_ = value;
-}
-
-bool Client::canWrite() const {
-  return write_;
-}
-
-void Client::certification() {
-  if (!nickname_.empty() && !usrname_.empty() && !password_.empty()) {
-    return ;
-  }
-  if (receive_.find("PASS") != std::string::npos) {
-    for (int i = 5; receive_[i]; ++i) {
-      if (!isprint(receive_[i]) || receive_[i] == ' ') {
-        break ;
-      }
-      password_.push_back(receive_[i]);
-    }
-    std::cout << password_ << std::endl;
-  }
-  if (receive_.find("NICK") != std::string::npos) {
-    for (int i = 5; receive_[i]; ++i) {
-      if (!isprint(receive_[i]) || receive_[i] == ' ') {
-         break ;
-      }
-      nickname_.push_back(receive_[i]);
-    }
-    std::cout << nickname_ << std::endl;
-  }
-  if (receive_.find("USER") != std::string::npos) {
-    for (int i = 5; receive_[i]; ++i) {
-      if (!isprint(receive_[i]) || receive_[i] == ' ') {
-        break;
-      }
-      usrname_.push_back(receive_[i]);
-    }
-    std::cout << usrname_ << std::endl;
-  }
-}
-
-std::string Client::getPassword() const {
-  return password_;
-}
-
-Client &Client::operator=(const Client &a) {
-  if (this != &a) {
-    nickname_ = a.nickname_;
-    usrname_ = a.usrname_;
-    write_ = a.write_;
-    receive_ = a.receive_;
-    password_ = a.password_;
-    socket_ = a.socket_;
-  }
-  return *this;
-}
-
-void Client::setNickname(std::string nick) {
-  nickname_ = nick;
-}
-
-}
+} // namespace irc

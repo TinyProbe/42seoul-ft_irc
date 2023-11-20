@@ -1,9 +1,6 @@
 #ifndef IRCSERV_REQUESTPOOL_H_
 #define IRCSERV_REQUESTPOOL_H_
 
-#include <queue>
-#include "Request.h"
-
 namespace irc {
 
 class RequestPool {

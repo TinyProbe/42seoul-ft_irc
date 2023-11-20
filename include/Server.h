@@ -1,51 +1,47 @@
 #ifndef IRCSERV_SERVER_H_
 #define IRCSERV_SERVER_H_
 
-#include "Client.h"
-#include <iostream>
-#include <map>
-#define MAX_BACKLOG 128
-
-#include <netinet/in.h>
-#include <fcntl.h>
-#include "Channel.h"
-#include <unistd.h>
-
 namespace irc {
 
-typedef std::map<int, Client> Connections;
-typedef std::map<std::string, Channel> SevChannel;
+typedef std::unordered_map<int, Client>          UMint_Client; // connection_
+typedef std::unordered_map<std::string, int>     UMstring_int; // nick_to_sock_
+typedef std::unordered_map<std::string, Channel> UMstring_Channel; // channel_map_
 
 class Server {
  public:
-  Server() {}
+  Server();
   ~Server() {}
 
-  void setPort(std::string port);
-  void setPassword(std::string password);
   int getSocket() const;
-  std::string getPassword() const;
-  Connections &getConnections();
-  Client &getClient(int socket);
+  std::string const &getHost() const;
+  UMint_Client &getConnection();
+  UMstring_int &getNickToSock();
+  UMstring_Channel &getChannelMap();
+  Client &getClient(int sock);
+  Client &getClient(std::string const &nick);
+  void setPort(int port);
+  void setPassword(std::string const &password);
+  bool verify(std::string const &password) const;
+
   void standby();
   void preProcess();
-  void disconnect(int socket);
   int accept();
-  int samename(std::string nickname) const;
-  bool setChannel(std::string name, std::string password, std::string nick);
-  Channel &getChannel(std::string name);
-  bool canChannel(std::string name);
-  void mangeCh(std::string name);
-  int nicktosocket(std::string nick);
-  std::string getChTopic(std::string chname);
-  void setChTopic(std::string chname, std::string topic);
+  void disconnect(int sock);
+  void disconnect(std::string const &nick);
+
+  void response(Request const &req, RequestPool &requests);
 
  private:
-  int port_;
-  int server_socket_;
+  int         sock_;
+  int         port_;
   std::string password_;
-  Connections connections_;
-  SevChannel sev_channel_;
+  std::string host_;
+
+  UMint_Client     connection_;
+  UMstring_int     nick_to_sock_;
+  UMstring_Channel channel_map_;
+
+  RequestCallback request_callback_;
 };
 
 } // namespace irc

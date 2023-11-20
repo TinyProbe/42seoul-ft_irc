@@ -1,37 +1,69 @@
 #ifndef IRCSERV_CLIENT_H_
 #define IRCSERV_CLIENT_H_
 
-#define MAX_BUF 1024
-#include <iostream>
-#include <cstring>
-#include <sys/socket.h>
-#include "Request.h"
-
 namespace irc {
+
+typedef std::unordered_map<std::string, bool> JoinedChannel;
 
 class Client {
  public:
-  Client() : write_(false) {}
+  Client() : auth_(), sock_(-1), nick_("*"), user_("*"),
+             real_("*"), host_("*"), can_write_() {
+    bzero(&addr_, sizeof(struct sockaddr_in));
+  }
   ~Client() {}
-  Client &operator=(const Client &a);
 
-  std::string getNickname() const ;
-  void receive(int socket);
-  bool canRequest() const ; 
-  Request createRequest();
-  void setWrite(bool value);
-  std::string getPassword() const;
-  bool canWrite() const ;
-  void certification();
-  void setNickname(std::string nick);
+  bool getAuth() const;
+  std::string const &getPassword() const;
+  int getSocket() const;
+  struct sockaddr_in const &getAddress() const;
+  void setAuth(bool auth);
+  void setPassword(std::string const &password);
+  void setSocket(int sock);
+  void setAddress(struct sockaddr_in const &addr);
+
+  std::string const &getNick() const;
+  std::string const &getUser() const;
+  std::string const &getReal() const;
+  std::string const &getHost() const;
+  void setNick(std::string const &nick);
+  void setUser(std::string const &user);
+  void setReal(std::string const &real);
+  void setHost(std::string const &host);
+  std::string getIdentify() const;
+
+  std::string &getBuffer();
+  bool canWrite() const;
+  void setWrite(bool can_write);
+
+  JoinedChannel &getJoinedChannel();
+  void join(std::string const &channel);
+  void part(std::string const &channel);
+  bool isJoined(std::string const &channel) const;
+
+  bool receive();
+  bool makeRequest();
+  Request const &getRequest() const;
 
  private:
-  std::string nickname_;
-  std::string usrname_;
-  bool write_;
-  std::string receive_;
-  std::string password_;
-  int socket_;
+  bool               auth_;
+  std::string        password_;
+  int                sock_;
+  struct sockaddr_in addr_;
+
+  std::string nick_;
+  std::string user_;
+  std::string real_;
+  std::string host_;
+
+  std::string buffer_;
+  bool        can_write_;
+
+  JoinedChannel joined_channel_;
+
+  Request request_;
+
+  static const int kMaxChannel;
 };
 
 } // namespace irc

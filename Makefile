@@ -81,28 +81,26 @@ endif
 
 ##################################
 # include/...
-INC_LST = Program.h \
-					EventPool.h \
-					RequestPool.h \
-					ResponsePool.h \
-					Client.h \
+INC_LST = \
+					Program.h \
 					Server.h \
+					Client.h \
+					Channel.h \
 					Request.h \
-					Response.h \
-					command.h \
-					Channel.h
+					EventPool.h \
+					RequestCallback.h \
 
 # source/...
-SRC_LST = Program.cpp \
+SRC_LST = \
+					main.cpp \
+					Program.cpp \
+					Server.cpp \
+					Client.cpp \
+					Channel.cpp \
+					Request.cpp \
 					EventPool.cpp \
 					RequestPool.cpp \
-					ResponsePool.cpp \
-					main.cpp \
-					Client.cpp \
-					Server.cpp \
-					command.cpp \
-					Request.cpp \
-					Channel.cpp
+					RequestCallback.cpp \
 
 INC = $(addprefix include/,$(INC_LST))
 OBJ = $(addprefix $(BUILD_DIR)/,$(SRC_LST:.cpp=.o))
