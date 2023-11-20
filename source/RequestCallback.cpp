@@ -55,10 +55,10 @@ static bool nickCheck(std::string const &nick) {
 
 static bool targetCheck(Server const &serv, std::string const &target) {
   if (target[0] == '#') {
-    ChannelMap const &channel_map = serv.getChannelMap();
+    UMstring_Channel const &channel_map = serv.getChannelMap();
     if (channel_map.find(target) == channel_map.end()) { return false; }
   } else {
-    Connection const &connection = serv.getConnection();
+    UMint_Client const &connection = serv.getConnection();
     if (connection.find(target) == connection.end()) { return false; }
   }
   return true;
@@ -71,6 +71,74 @@ static bool verify(Server &serv, Client const &client) {
     msg += ":You have not registered\r\n";
     send_(serv, client, msg, "response: verify: ");
     return false;
+  }
+  return true;
+}
+
+static bool channelCheck(Server &serv,
+                         std::vector<std::string> const &param,
+                         std::string &msg) {
+  UMstring_Channel const &channel_map = serv.getChannelMap();
+  for (int i = 0; i < param.size(); ++i) {
+    if (param[i][0] != '#') { continue; }
+    if (channel_map.find(param[i]) == channel_map.end()) {
+      msg += "403 ";
+      msg += param[i] + " ";
+      msg += ":No such channel\r\n";
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool isJoinedChannel(Server &serv,
+                            Client &client,
+                            std::vector<std::string> const &param,
+                            std::string &msg) {
+  UMstring_Channel const &channel_map = serv.getChannelMap();
+  UMstring_bool const &joined_channel = client.getJoinedChannel();
+  for (int i = 0; i < param.size(); ++i) {
+    if (param[i][0] != '#') { continue; }
+    if (!channel_map[param[i]].isJoined(client.getNick()) ||
+        joined_channel.find(param[i]) == joined_channel.end()) {
+      msg += "442 ";
+      msg += param[i] + " ";
+      msg += ":You're not on that channel\r\n";
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool isChannelOper(Server &serv,
+                          Client &client,
+                          std::vector<std::string> const &param,
+                          std::string &msg) {
+  UMstring_Channel const &channel_map = serv.getChannelMap();
+  for (int i = 0; i < param.size(); ++i) {
+    if (param[i][0] != '#') { continue; }
+    if (!channel_map[param[i]].isOperator(client.getNick())) {
+      msg += "482 ";
+      msg += param[i] + " ";
+      msg += ":You're not channel operator\r\n";
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool isTargetJoined(Server &serv,
+                          std::vector<std::string> const &param,
+                          std::string &msg) {
+  UMstring_Channel const &channel_map = serv.getChannelMap();
+  for (int i = 0; i < param.size(); ++i) {
+    if (param[i][0] != '#') { continue; }
+    if (!channel_map[param[i]].isOperator(client.getNick())) {
+      msg += "482 ";
+      msg += param[i] + " ";
+      msg += ":You're not channel operator\r\n";
+      return false;
+    }
   }
   return true;
 }
@@ -102,8 +170,8 @@ void RequestCallback::operator()(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::unknown(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) { // ERR_UNKNOWNCOMMAND
     Client &client = it->second;
     std::string msg = std::string(":") + serv_.getHost() + " ";
@@ -115,8 +183,8 @@ void RequestCallback::unknown(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::pass(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     std::vector<std::string> const &param = req.getParam();
@@ -138,8 +206,8 @@ void RequestCallback::pass(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::nick(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     std::vector<std::string> const &param = req.getParam();
@@ -166,8 +234,8 @@ void RequestCallback::nick(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::user(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     std::vector<std::string> const &param = req.getParam();
@@ -189,8 +257,8 @@ void RequestCallback::user(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }
@@ -231,8 +299,8 @@ void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::join(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }
@@ -272,7 +340,7 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
       msg += param[0] + " ";
       msg += ":You have joined too many channels\r\n";
     } else {
-      // ...
+      // ... (channel name: nickCheck([1:])) 
       return;
     }
     send_(serv_, client, msg, "response: join: ");
@@ -280,8 +348,8 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::names(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }
@@ -294,9 +362,9 @@ void RequestCallback::names(Request const &req, RequestPool &requests) {
       msg += std::string("= ") + param[0] + " ";
       msg += ":";
       Channel &channel = serv_.getChannelMap()[param[0]];
-      Joined &joined = channel.getJoined();
-      Joined::iterator i;
-      for (i = connection.begin(); i != connection.end(); ++i) {
+      UMstring_Client &joined_client = channel.getJoinedClient();
+      UMstring_Client::iterator i;
+      for (i = joined_client.begin(); i != joined_client.end(); ++i) {
         std::string const &nick = i->second.getNick();
         if (channel.isOperator(nick) == 1) { msg += "@"; }
         msg += nick + " ";
@@ -314,41 +382,61 @@ void RequestCallback::names(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::part(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }
     std::vector<std::string> const &param = req.getParam();
     std::string msg = std::string(":") + serv_.getHost() + " ";
-    Channel const &channel = serv_.getChannelMap()[param[0]];
-    if (req.isDerived()) { // derived request
-      channel.
-    } else if () { // ERR_NEEDMOREPARAMS
-    } else if () { // ERR_NOSUCHCHANNEL
-    } else if () { // ERR_NOTONCHANNEL
+    if (param.size() < 1) { // ERR_NEEDMOREPARAMS
+      msg += "461 ";
+      msg += req.getCommand() + " ";
+      msg += ":Not enough parameters\r\n";
+    } else if (!channelCheck(serv_, param, msg)) {
+      // ERR_NOSUCHCHANNEL
+    } else if (!isJoinedChannel(serv_, client, param, msg)) {
+      // ERR_NOTONCHANNEL
     } else {
+      UMstring_Channel &channel_map = serv.getChannelMap();
+      for (int i = 0; i < param.size(); ++i) {
+        channel_map[param[i]].part(client.getNick());
+        client.part(param[i]);
+        // make/add Request to RequestPool: "PRIVMSG param[i] req.getPartMsg()"
+      }
+      return;
     }
     send_(serv_, client, msg, "response: part: ");
   }
 }
 
 void RequestCallback::kick(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }
     std::vector<std::string> const &param = req.getParam();
     std::string msg = std::string(":") + serv_.getHost() + " ";
-
+    if (param.size() < 2) { // ERR_NEEDMOREPARAMS
+      msg += "461 ";
+      msg += req.getCommand() + " ";
+      msg += ":Not enough parameters\r\n";
+    } else if (!channelCheck(serv_, param, msg)) {
+      // ERR_NOSUCHCHANNEL
+    } else if (!isChannelOper(serv_, client, param, msg)) {
+      // ERR_CHANOPRIVSNEEDED
+    } else if (!isTargetJoined(serv_, param, msg)) { // ERR_USERNOTINCHANNEL
+    } else if () { // ERR_NOTONCHANNEL
+    } else {
+    }
     send_(serv_, client, msg, "response: kick: ");
   }
 }
 
 void RequestCallback::invite(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }
@@ -360,8 +448,8 @@ void RequestCallback::invite(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::topic(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }
@@ -373,8 +461,8 @@ void RequestCallback::topic(Request const &req, RequestPool &requests) {
 }
 
 void RequestCallback::mode(Request const &req, RequestPool &requests) {
-  Connection &connection = serv_.getConnection();
-  Connection::iterator it = connection.find(req.getRequesterSocket());
+  UMint_Client &connection = serv_.getConnection();
+  UMint_Client::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }

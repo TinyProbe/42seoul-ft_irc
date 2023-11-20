@@ -80,8 +80,7 @@ Client &Server::getClient(std::string const &nick) {
 
 void Server::setPort(int port) {
   if (port < 0 || port > 65535) {
-    throw std::runtime_error(std::string("port: ") +
-                             std::string(strerror(errno)));
+    throw std::runtime_error(std::string("port: 0 <= port <= 65535"));
   }
   port_ = port;
   std::size_t pos = host_.find(':');
@@ -189,7 +188,7 @@ void Server::disconnect(int sock) {
 
     UMstring_Channel::iterator i;
     for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
-      i->second.disconnect(sock);
+      i->second.part(sock);
     }
   }
 }
@@ -203,7 +202,7 @@ void Server::disconnect(std::string const &nick) {
 
     UMstring_Channel::iterator i;
     for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
-      i->second.disconnect(nick);
+      i->second.part(nick);
     }
   }
 }

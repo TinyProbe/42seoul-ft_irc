@@ -10,8 +10,8 @@ void Program::run(int argc, char **argv) {
     init(argc, argv);
     loop();
   } catch (std::exception const &e) {
-    Connection &connection = serv_.getConnection();
-    Connection::iterator i;
+    UMint_Client &connection = serv_.getConnection();
+    UMint_Client::iterator i;
     for (i = connection.begin(); i != connection.end(); ++i) {
       close(i->first);
     }

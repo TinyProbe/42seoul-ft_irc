@@ -18,10 +18,10 @@ class RequestCallback {
   void nick(Request const &req, RequestPool &requests);
   void user(Request const &req, RequestPool &requests);
   void privMsg(Request const &req, RequestPool &requests); // derive: privMsg
-  void join(Request const &req, RequestPool &requests); // derive: join, topic, names, part
+  void join(Request const &req, RequestPool &requests); // derive: join   add: topic, names, part
   void names(Request const &req, RequestPool &requests);
-  void part(Request const &req, RequestPool &requests);
-  void kick(Request const &req, RequestPool &requests);
+  void part(Request const &req, RequestPool &requests); // add: privMsg
+  void kick(Request const &req, RequestPool &requests); // add: privMsg
   void invite(Request const &req, RequestPool &requests);
   void topic(Request const &req, RequestPool &requests);
   void mode(Request const &req, RequestPool &requests);

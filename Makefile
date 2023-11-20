@@ -87,12 +87,9 @@ INC_LST = \
 					Client.h \
 					Channel.h \
 					Request.h \
-					Response.h \
 					EventPool.h \
 					RequestPool.h \
-					ResponsePool.h \
 					RequestCallback.h \
-					ResponseCallback.h \
 
 # source/...
 SRC_LST = \
@@ -102,12 +99,9 @@ SRC_LST = \
 					Client.cpp \
 					Channel.cpp \
 					Request.cpp \
-					Response.cpp \
 					EventPool.cpp \
 					RequestPool.cpp \
-					ResponsePool.cpp \
 					RequestCallback.cpp \
-					ResponseCallback.cpp \
 
 INC = $(addprefix include/,$(INC_LST))
 OBJ = $(addprefix $(BUILD_DIR)/,$(SRC_LST:.cpp=.o))

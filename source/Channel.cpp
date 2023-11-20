@@ -1,4 +1,4 @@
-#include "Channel.h"
+#UMint_Clientinclude "Channel.h"
 
 namespace irc {
 
@@ -12,19 +12,19 @@ void Channel::ban(std::string const &nick) {
 }
 
 bool Channel::isBanned(std::string const &nick) const {
-  if (ban_list_.find(nick) != ban_list_.end()) {
-    return true;
+  if (ban_list_.find(nick) == ban_list_.end()) {
+    return false;
   }
-  return false;
+  return true;
 }
 
 UMstring_bool &Channel::getJoinedClient() { return joined_client_; }
 
 bool Channel::isJoined(std::string const &nick) const {
-  if (joined_client_.find(nick) != joined_client_.end()) {
-    return true;
+  if (joined_client_.find(nick) == joined_client_.end()) {
+    return false;
   }
-  return false;
+  return true;
 }
 
 bool Channel::join(std::string const &nick) {

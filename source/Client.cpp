@@ -56,7 +56,9 @@ bool Client::canWrite() const { return can_write_; }
 
 void Client::setWrite(bool can_write) { can_write_ = can_write; }
 
-JoinedChannel const &Client::getJoinedChannel() const { return joined_channel_; }
+UMstring_bool const &Client::getJoinedChannel() const {
+  return joined_channel_;
+}
 
 void Client::join(std::string const &channel) {
   joined_channel_[channel] = true;
