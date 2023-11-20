@@ -23,7 +23,7 @@ bool EventPool::pollEvent(struct kevent &ev) {
   static int len;
   if (len == 0) {
     len = kevent(kqueue_, NULL, 0, &new_events_[0], new_events_.size(), NULL);
-    if (len == 0) {
+    if (len == 0) { // fix
       return false;
     } else if (len == -1) {
       throw std::runtime_error(std::string("kevent: ") +

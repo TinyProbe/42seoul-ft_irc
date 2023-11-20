@@ -6,7 +6,9 @@ static void send_(Server &serv,
                   Client const &client,
                   std::string const &msg,
                   std::string const &call_stack) {
-  if (!client.canWrite()) { return; }
+  if (!client.canWrite()) {
+    throw std::runtime_error("Can't write to client");
+  }
   if (send(client.getSocket(),
            msg.c_str(),
            msg.size(),
@@ -234,9 +236,9 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
   if (it != connection.end()) {
     Client &client = it->second;
     if (!verify(serv_, client)) { return; }
-    Channel const &channel = serv_.getChannelMap()[param[0]];
     std::vector<std::string> const &param = req.getParam();
     std::string msg = std::string(":") + serv_.getHost() + " ";
+    Channel const &channel = serv_.getChannelMap()[param[0]];
     if (req.isDerived()) { // derived request
       msg  = std::string(":") + client.getIdentify() + " ";
       msg += res.getCommand() + " ";
@@ -251,11 +253,11 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
       msg += "474 ";
       msg += param[0] + " ";
       msg += ":Cannot join channel (+b)\r\n";
-    } else if (channel.isInviteOnly()) { // ERR_INVITEONLYCHAN
+    } else if (channel.getInviteOnly()) { // ERR_INVITEONLYCHAN
       msg += "473 ";
       msg += param[0] + " ";
       msg += ":Cannot join channel (+i)\r\n";
-    } else if (channel.hasPass() &&
+    } else if (channel.getHasPassword() &&
         (param.size() < 2 || !channel.verify(param[1]))) { // ERR_BADCHANNELKEY
       msg += "475 ";
       msg += param[0] + " ";
@@ -311,7 +313,7 @@ void RequestCallback::names(Request const &req, RequestPool &requests) {
   }
 }
 
-void RequestCallback::part(Request const &req, RequestPool &requests) { // working on here!
+void RequestCallback::part(Request const &req, RequestPool &requests) {
   Connection &connection = serv_.getConnection();
   Connection::iterator it = connection.find(req.getRequesterSocket());
   if (it != connection.end()) {
@@ -319,7 +321,14 @@ void RequestCallback::part(Request const &req, RequestPool &requests) { // worki
     if (!verify(serv_, client)) { return; }
     std::vector<std::string> const &param = req.getParam();
     std::string msg = std::string(":") + serv_.getHost() + " ";
-
+    Channel const &channel = serv_.getChannelMap()[param[0]];
+    if (req.isDerived()) { // derived request
+      channel.
+    } else if () { // ERR_NEEDMOREPARAMS
+    } else if () { // ERR_NOSUCHCHANNEL
+    } else if () { // ERR_NOTONCHANNEL
+    } else {
+    }
     send_(serv_, client, msg, "response: part: ");
   }
 }

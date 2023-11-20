@@ -3,14 +3,14 @@
 
 namespace irc {
 
-typedef std::unordered_map<std::string, bool> Connection2;
+typedef std::unordered_map<std::string, bool> Joined;
 typedef std::unordered_map<std::string, bool> BanList;
 typedef std::unordered_map<std::string, bool> Operator;
 
 class Channel {
  public:
   Channel() : invite_only_(),
-              topic_only_(),
+              oper_topic_(),
               has_password(),
               user_limit_(),
               limit_() {}
@@ -22,9 +22,10 @@ class Channel {
   void ban(std::string const &nick);
   bool isBanned(std::string const &nick) const;
 
-  Connection2 &getConnection2() const;
+  Joined &getJoined() const;
   bool isJoined(std::string const &nick) const;
-  void disconnect(std::string const &nick);
+  bool join(std::string const &nick);
+  void part(std::string const &nick);
 
   void setOrigin(std::string const &nick);
   void addOperator(std::string const &nick);
@@ -32,11 +33,11 @@ class Channel {
   int isOperator(std::string const &nick);
 
   bool getInviteOnly() const;
-  bool getTopicOnly() const;
+  bool getOperTopic() const;
   bool getHasPassword() const;
   bool getUserLimit() const;
   void setInviteOnly(bool invite_only);
-  void setTopicOnly(bool topic_only);
+  void setOperTopic(bool oper_topic);
   void setHasPassword(bool has_password);
   void setUserLimit(bool user_limit);
 
@@ -48,14 +49,14 @@ class Channel {
  private:
   std::string name_;
 
-  Connection2 connection2_;
-  BanList     ban_list_;
+  Joined  joined_;
+  BanList ban_list_;
 
   std::string origin_;
   Operator    operator_;
 
   bool        invite_only_;
-  bool        topic_only_;
+  bool        oper_topic_;
   bool        has_password_;
   bool        user_limit_;
   std::string password_;

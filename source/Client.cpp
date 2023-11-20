@@ -100,6 +100,10 @@ void Client::join(std::string const &channel) {
   join_channel_[channel] = true;
 }
 
+void Client::part(std::string const &channel) {
+  join_channel_.erase(channel);
+}
+
 bool Client::isJoined(std::string const &channel) const {
   JoinChannel::iterator it = join_channel_.find(channel);
   if (it != join_channel_.end()) {

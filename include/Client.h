@@ -38,6 +38,7 @@ class Client {
 
   JoinChannel const &getJoinChannel() const;
   void join(std::string const &channel);
+  void part(std::string const &channel);
   bool isJoined(std::string const &channel) const;
 
   bool receive();
