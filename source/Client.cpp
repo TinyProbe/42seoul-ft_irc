@@ -94,7 +94,7 @@ bool Client::receive() {
 
 bool Client::makeRequest() {
   if (buffer_.size() == 0) { return false; }
-  request_.clear();
+  request_ = Request();
 
   // ...
 

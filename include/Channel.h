@@ -17,6 +17,10 @@ class Channel {
   std::string const &getName() const;
   void setName(std::string const &name);
 
+  void addInvite(std::string const &nick);
+  void delInvite(std::string const &nick);
+  bool isInvited(std::string const &nick) const;
+
   void ban(std::string const &nick);
   bool isBanned(std::string const &nick) const;
 
@@ -39,6 +43,8 @@ class Channel {
   void setHasPassword(bool has_password);
   void setHasLimit(bool has_limit);
 
+  std::string const &getTopic() const;
+  void setTopic(std::string const &topic);
   bool verify(std::string const &password) const;
   void setPassword(std::string const &password);
   std::size_t getLimit() const;
@@ -48,6 +54,7 @@ class Channel {
   std::string name_;
 
   UMstring_bool joined_client_;
+  UMstring_bool invite_list_;
   UMstring_bool ban_list_;
 
   std::string   origin_;
@@ -57,6 +64,7 @@ class Channel {
   bool        oper_topic_;
   bool        has_password_;
   bool        has_limit_;
+  std::string topic_;
   std::string password_;
   std::size_t limit_;
 };

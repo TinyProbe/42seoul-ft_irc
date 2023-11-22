@@ -4,6 +4,7 @@
 namespace irc {
 
 typedef void (*RequestFunc)(Request const &, RequestPool &);
+typedef std::vector<std::string> Vstring;
 
 class RequestCallback {
  public:
@@ -23,6 +24,8 @@ class RequestCallback {
   void part(Request const &req, RequestPool &requests); // add: privMsg
   void kick(Request const &req, RequestPool &requests); // add: privMsg
   void invite(Request const &req, RequestPool &requests);
+  void accept(Request const &req, RequestPool &requests);
+  void deny(Request const &req, RequestPool &requests);
   void topic(Request const &req, RequestPool &requests);
   void mode(Request const &req, RequestPool &requests);
 

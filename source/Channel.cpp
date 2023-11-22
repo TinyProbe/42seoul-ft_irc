@@ -6,6 +6,17 @@ std::string const &Channel::getName() const { return name_; }
 
 void Channel::setName(std::string const &name) { name_ = name; }
 
+void Channel::addInvite(std::string const &nick) { invite_list_[nick] = true; }
+
+void Channel::delInvite(std::string const &nick) { invite_list_.erase(nick) }
+
+bool Channel::isInvited(std::string const &nick) const {
+  if (invite_list_.find(nick) == invite_list_.end()) {
+    return false;
+  }
+  return true;
+}
+
 void Channel::ban(std::string const &nick) {
   part(nick);
   ban_list_[nick] = true;
@@ -63,6 +74,10 @@ void Channel::setHasPassword(bool has_password) {
 }
 
 void Channel::setHasLimit(bool has_limit) { has_limit_ = has_limit; }
+
+std::string const &Channel::getTopic() const { return topic_; }
+
+void Channel::setTopic(std::string const &topic) { topic_ = topic; }
 
 bool Channel::verify(std::string const &password) const {
   return password_ == password;
