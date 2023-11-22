@@ -126,22 +126,6 @@ static bool isChannelOper(Server &serv,
   return true;
 }
 
-static bool isTargetJoined(Server &serv,
-                           Vstring const &param,
-                           std::string &msg) {
-  UMstring_Channel const &channel_map = serv.getChannelMap();
-  for (int i = 0; i < param.size(); ++i) {
-    if (param[i][0] != '#') { continue; }
-    if (!channel_map[param[i]].isOperator(client.getNick())) {
-      msg += "482 ";
-      msg += param[i] + " ";
-      msg += ":You're not channel operator\r\n";
-      return false;
-    }
-  }
-  return true;
-}
-
 static void invite_(Server &serv,
                     Client &client,
                     Client &target,
@@ -316,7 +300,7 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
     send_(serv_, serv_.getClient(req.getTargetSocket()), msg, "response: join: ");
     return;
   } else if (!errNeedMoreParam(1, req.getCommand(), param, msg)) {
-                                                    // ERR_NEEDMOREPARAM
+    // ERR_NEEDMOREPARAM
   } else if (channel.isBanned(client.getNick())) { // ERR_BANNEDFROMCHAN
     msg += "474 ";
     msg += param[0] + " ";
@@ -390,7 +374,7 @@ void RequestCallback::part(Request const &req, RequestPool &requests) {
     for (int i = 0; i < param.size(); ++i) {
       channel_map[param[i]].part(client.getNick());
       client.part(param[i]);
-      // make PRIVMSG: "PRIVMSG param[i] req.getPartMsg()"
+      // make PRIVMSG: "PRIVMSG param[i] req.getAddiParam()"
     }
     return;
   }
@@ -405,7 +389,7 @@ void RequestCallback::kick(Request const &req, RequestPool &requests) {
   if (!errNeedMoreParam(2, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
   } else if (!channelCheck(serv_, param, msg)) { // ERR_NOSUCHCHANNEL
   } else if (!isChannelOper(serv_, client, param, msg)) {// ERR_CHANOPRIVSNEEDED
-  } else if (!isTargetJoined(serv_, param, msg)) { // ERR_USERNOTINCHANNEL
+  } else if () { // ERR_USERNOTINCHANNEL <- here!!!
   } else if (!isClientJoined(serv_, client, param, msg)) { // ERR_NOTONCHANNEL
   } else {
     // ... make PRIVMSG, kick target
@@ -504,21 +488,80 @@ void RequestCallback::mode(Request const &req, RequestPool &requests) {
   if (!verify(serv_, client)) { return; }
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
-  if () { // ERR_NEEDMOREPARAMS
-  } else if () { // ERR_KEYSET
-  } else if () { // ERR_NOCHANMODES
-  } else if () { // ERR_CHANOPRIVSNEEDED
-  } else if () { // ERR_USERNOTINCHANNEL
-  } else if () { // ERR_UNKNOWNMODE
+  if (!errNeedMoreParam(2, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
+  } else if (!channelCheck(serv_, param, msg)) { // ERR_NOSUCHCHANNEL
+  } else if (!isChannelOper(serv_, client, param, msg)) {// ERR_CHANOPRIVSNEEDED
+  } else if (param[1].size() != 2 ||
+      (param[1][0] != '-' && param[1][0] != '+') ||
+      std::string("oitkl").find(param[1][1]) == std::string::npos) {
+    // ERR_UNKNOWNMODE
+    msg += "472 ";
+    msg += param[1] + " ";
+    msg += ":is unknown mode char to me for ";
+    msg += param[0] + "\r\n";
   } else {
-    // RPL_CHANNELMODEIS
-    // RPL_BANLIST
-    // RPL_ENDOFBANLIST
-    // RPL_EXCEPTLIST
-    // RPL_ENDOFEXCEPTLIST
-    // RPL_INVITELIST
-    // RPL_ENDOFINVITELIST
-    // RPL_UNIQOPIS
+    Channel &channel = serv_.getChannelMap()[param[0]];
+    if (param[1][1] == 'o') {
+      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+        // ERR_NEEDMOREPARAM
+      } else if () { // ERR_USERNOTINCHANNEL <- here!!!
+      } else { // RPL_CHANNELMODEIS
+        msg += "324 ";
+        for (int i = 0; i < param.size(); ++i) {
+          msg += param[i] + " ";
+        }
+        msg += "\r\n";
+        if (param[1][0] == '+') {
+          channel.addOperator(param[2]);
+        } else {
+          channel.delOperator(param[2]);
+        }
+      }
+    } else if (param[1][1] == 'i') {
+      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+        // ERR_NEEDMOREPARAM
+      } else if () { // ERR_USERNOTINCHANNEL
+      } else { // RPL_CHANNELMODEIS
+        msg += "324 ";
+        for (int i = 0; i < param.size(); ++i) {
+          msg += param[i] + " ";
+        }
+        msg += "\r\n";
+      }
+    } else if (param[1][1] == 't') {
+      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+        // ERR_NEEDMOREPARAM
+      } else if () { // ERR_USERNOTINCHANNEL
+      } else { // RPL_CHANNELMODEIS
+        msg += "324 ";
+        for (int i = 0; i < param.size(); ++i) {
+          msg += param[i] + " ";
+        }
+        msg += "\r\n";
+      }
+    } else if (param[1][1] == 'k') {
+      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+        // ERR_NEEDMOREPARAM
+      } else if () { // ERR_USERNOTINCHANNEL
+      } else { // RPL_CHANNELMODEIS
+        msg += "324 ";
+        for (int i = 0; i < param.size(); ++i) {
+          msg += param[i] + " ";
+        }
+        msg += "\r\n";
+      }
+    } else {
+      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+        // ERR_NEEDMOREPARAM
+      } else if () { // ERR_USERNOTINCHANNEL
+      } else { // RPL_CHANNELMODEIS
+        msg += "324 ";
+        for (int i = 0; i < param.size(); ++i) {
+          msg += param[i] + " ";
+        }
+        msg += "\r\n";
+      }
+    }
   }
   send_(serv_, client, msg, "response: mode: ");
 }
