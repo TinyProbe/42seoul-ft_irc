@@ -11,31 +11,13 @@ void Channel::addInvite(std::string const &nick) { invite_list_[nick] = true; }
 void Channel::delInvite(std::string const &nick) { invite_list_.erase(nick) }
 
 bool Channel::isInvited(std::string const &nick) const {
-  if (invite_list_.find(nick) == invite_list_.end()) {
-    return false;
-  }
-  return true;
-}
-
-void Channel::ban(std::string const &nick) {
-  part(nick);
-  ban_list_[nick] = true;
-}
-
-bool Channel::isBanned(std::string const &nick) const {
-  if (ban_list_.find(nick) == ban_list_.end()) {
-    return false;
-  }
-  return true;
+  return invite_list_.find(nick) != invite_list_.end();
 }
 
 UMstring_bool &Channel::getJoinedClient() { return joined_client_; }
 
 bool Channel::isJoined(std::string const &nick) const {
-  if (joined_client_.find(nick) == joined_client_.end()) {
-    return false;
-  }
-  return true;
+  return joined_client_.find(nick) != joined_client_.end();
 }
 
 bool Channel::join(std::string const &nick) {

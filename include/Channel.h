@@ -21,9 +21,6 @@ class Channel {
   void delInvite(std::string const &nick);
   bool isInvited(std::string const &nick) const;
 
-  void ban(std::string const &nick);
-  bool isBanned(std::string const &nick) const;
-
   UMstring_bool &getJoinedClient();
   bool isJoined(std::string const &nick) const;
   bool join(std::string const &nick);
@@ -55,7 +52,6 @@ class Channel {
 
   UMstring_bool joined_client_;
   UMstring_bool invite_list_;
-  UMstring_bool ban_list_;
 
   std::string   origin_;
   UMstring_bool operator_;

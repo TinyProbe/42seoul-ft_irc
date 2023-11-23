@@ -5,6 +5,24 @@ namespace irc {
 static int const Client::kMaxChannel = 50;
 static int const kMaxBuffer = (1 << 20);
 
+static Request makeRequest_(int request_code,
+                            int requester_sock,
+                            int target_sock,
+                            std::string const &command,
+                            std::string const &addi,
+                            Vstring const &param,
+                            bool is_derived) {
+  Request req;
+  req.setRequestCode(request_code);
+  req.setRequesterSocket(requester_sock);
+  req.setTargetSocket(target_sock);
+  req.setCommand(command);
+  req.setAddi(addi);
+  req.setParam(param);
+  req.setDerived(is_derived);
+  return req;
+}
+
 bool Client::getAuth() const { return auth_; }
 
 std::string const &Client::getPassword() const { return password_; }
@@ -94,10 +112,8 @@ bool Client::receive() {
 
 bool Client::makeRequest() {
   if (buffer_.size() == 0) { return false; }
-  request_ = Request();
-
-  // ...
-
+  // ... <- here!!!
+  request_ = makeRequest_();
   return true;
 }
 

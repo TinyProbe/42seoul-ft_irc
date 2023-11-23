@@ -55,10 +55,10 @@ static bool nickCheck(std::string const &nick) {
 static bool targetCheck(Server const &serv, std::string const &target) {
   if (target[0] == '#') {
     UMstring_Channel const &channel_map = serv.getChannelMap();
-    if (channel_map.find(target) == channel_map.end()) { return false; }
+    return channel_map.find(target) != channel_map.end();
   } else {
     UMint_Client const &connection = serv.getConnection();
-    if (connection.find(target) == connection.end()) { return false; }
+    return connection.find(target) != connection.end();
   }
   return true;
 }
@@ -149,6 +149,32 @@ static bool errNeedMoreParam(std::size_t mn,
     return false;
   }
   return true;
+}
+
+static void rplChannelModeIs(Vstring const &param, std::string &msg) {
+  msg += "324 ";
+  for (int i = 0; i < param.size(); ++i) {
+    msg += param[i] + " ";
+  }
+  msg += "\r\n";
+}
+
+static Request makeRequest(int request_code,
+                           int requester_sock,
+                           int target_sock,
+                           std::string const &command,
+                           std::string const &addi,
+                           Vstring const &param,
+                           bool is_derived) {
+  Request req;
+  req.setRequestCode(request_code);
+  req.setRequesterSocket(requester_sock);
+  req.setTargetSocket(target_sock);
+  req.setCommand(command);
+  req.setAddi(addi);
+  req.setParam(param);
+  req.setDerived(is_derived);
+  return req;
 }
 
 RequestCallback::RequestCallback(Server &serv)
@@ -257,10 +283,11 @@ void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (req.isDerived()) { // derived request
     msg  = std::string(":") + client.getIdentify() + " ";
-    msg += res.getCommand() + " ";
-    msg += param[0] + " ";
+    msg += req.getCommand() + " ";
+    msg += serv_.getClient(req.getTargetSocket()).getNick() + " ";
     msg += param[1] + "\r\n";
-    send_(serv_, serv_.getClient(req.getTargetSocket()), msg, "response: privMsg: ");
+    send_(serv_, serv_.getClient(req.getTargetSocket()), msg,
+          "response: privMsg: ");
     return;
   } else if (param.size() < 1) { // ERR_NORECIPIENT
     msg += "411 ";
@@ -271,17 +298,37 @@ void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
     msg += ":No text to send\r\n";
   } else if (param.size() > 2) { // ERR_TOOMANYTARGETS
     msg += "407 ";
-    for (int i = 0; i < param.size() - 1; ++i) {
-      msg += param[i] + " ";
-    }
+    msg += param[0] + " ";
     msg += ":ERR_TOOMANYTARGETS recipients. ";
-    msg += param.back() + "\r\n";
+    msg += param[1] + "\r\n";
   } else if (!targetCheck(serv_, param[0])) { // ERR_NOSUCHNICK
     msg += "401 ";
     msg += param[0] + " ";
     msg += ":No such nick/channel\r\n";
-  } else {
-    // ... make PRIVMSG
+  } else { // make PRIVMSG
+    if (param[0][0] == '#') { // to channel ...
+      Channel &channel = serv_.getChannelMap()[param[0]];
+      UMstring_bool &joined_client = channel.getJoinedClient();
+      UMstring_bool::iterator i;
+      for (i = joined_client.begin(); i != joined_client.end(); ++i) {
+        if (client.getNick() == i->first) { continue; }
+        requests.push(makeRequest(req.getRequestCode(),
+                                  req.getRequesterSocket(),
+                                  serv_.getNickToSock()[i->first],
+                                  req.getCommand(),
+                                  req.getAddi(),
+                                  req.getParam(),
+                                  true));
+      }
+    } else { // to user ...
+      requests.push(makeRequest(req.getRequestCode(),
+                                req.getRequesterSocket(),
+                                req.getTargetSocket(),
+                                req.getCommand(),
+                                req.getAddi(),
+                                req.getParam(),
+                                true));
+    }
     return;
   }
   send_(serv_, client, msg, "response: privMsg: ");
@@ -291,20 +338,34 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
   Client &client = serv_.getClient(req.getRequesterSocket());
   if (!verify(serv_, client)) { return; }
   Vstring const &param = req.getParam();
+  if (param[0] == "0") {
+    // make PART
+    Vstring param2;
+    UMstring_bool &joined_channel = client.getJoinedChannel();
+    UMstring_bool::iterator i;
+    for (i = joined_channel.begin(); i != joined_channel.end(); ++i) {
+      param2.push_back(i->first);
+    }
+    requests.push(makeRequest(Request::kPart,
+                              req.getRequesterSocket(),
+                              req.getTargetSocket(),
+                              "PART",
+                              req.getAddi(),
+                              param2,
+                              true));
+    return;
+  }
   Channel &channel = serv_.getChannelMap()[param[0]];
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (req.isDerived()) { // derived request
     msg  = std::string(":") + client.getIdentify() + " ";
-    msg += res.getCommand() + " ";
+    msg += req.getCommand() + " ";
     msg += param[0] + "\r\n";
-    send_(serv_, serv_.getClient(req.getTargetSocket()), msg, "response: join: ");
+    send_(serv_, serv_.getClient(req.getTargetSocket()), msg,
+          "response: join: ");
     return;
   } else if (!errNeedMoreParam(1, req.getCommand(), param, msg)) {
     // ERR_NEEDMOREPARAM
-  } else if (channel.isBanned(client.getNick())) { // ERR_BANNEDFROMCHAN
-    msg += "474 ";
-    msg += param[0] + " ";
-    msg += ":Cannot join channel (+b)\r\n";
   } else if (channel.getInviteOnly() &&
       !channel.isInvite(client.getNick())) { // ERR_INVITEONLYCHAN
     msg += "473 ";
@@ -321,11 +382,39 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
     msg += param[0] + " ";
     msg += ":Cannot join channel (+l)\r\n";
   } else if (client.getChannelMap().size() >= Client::kMaxChannel) {
-                                                      // ERR_TOOMANYCHANNELS
+                                                        // ERR_TOOMANYCHANNELS
     msg += param[0] + " ";
     msg += ":You have joined too many channels\r\n";
   } else {
-    // ... (channel name: nickCheck([1:])), delInvite()
+    if (channel.getName() == "") {
+      channel.setName(param[0]);
+      channel.setOrigin(client.getNick());
+    }
+    channel.delInvite(client.getNick());
+    channel.join(client.getNick());
+    client.join(channel.getName());
+    // make JOIN
+    UMstring_bool &joined_client = channel.getJoinedClient();
+    UMstring_bool::iterator i;
+    for (i = joined_client.begin(); i != joined_client.end(); ++i) {
+      requests.push(makeRequest(req.getRequestCode(),
+                                req.getRequesterSocket(),
+                                serv_.getNickToSock()[i->first],
+                                req.getCommand(),
+                                req.getAddi(),
+                                req.getParam(),
+                                true));
+    }
+    // make NAMES
+    Vstring param2;
+    param2.push_back(param[0]);
+    requests.push(makeRequest(Request::kNames,
+                              req.getRequesterSocket(),
+                              req.getTargetSocket(),
+                              "NAMES",
+                              req.getAddi(),
+                              param2,
+                              false));
     return;
   }
   send_(serv_, client, msg, "response: join: ");
@@ -336,7 +425,7 @@ void RequestCallback::names(Request const &req, RequestPool &requests) {
   if (!verify(serv_, client)) { return; }
   Vstring const &param = req.getParam();
   std::string msg;
-  if (param.size() == 1 && param[0][0] == "#" && targetCheck(param[0])) {
+  if (param.size() == 1 && param[0][0] == '#' && targetCheck(param[0])) {
     // RPL_NAMREPLY
     msg  = std::string(":") + serv_.getHost() + " ";
     msg += "353 ";
@@ -372,9 +461,23 @@ void RequestCallback::part(Request const &req, RequestPool &requests) {
   } else {
     UMstring_Channel &channel_map = serv.getChannelMap();
     for (int i = 0; i < param.size(); ++i) {
-      channel_map[param[i]].part(client.getNick());
+      Channel &channel = channel_map[param[i]];
+      channel.part(client.getNick());
       client.part(param[i]);
-      // make PRIVMSG: "PRIVMSG param[i] req.getAddiParam()"
+      // send part message
+      UMstring_bool joined_client = channel.getJoinedClient();
+      UMstring_bool::iterator j;
+      for (j = joined_client.begin(); j != joined_client.end(); ++j) {
+        msg  = std::string(":") + client.getIdentify() + " ";
+        msg += req.getCommand() + " ";
+        msg += param[i] + " ";
+        if (req.getAddi() == "") {
+          msg += client.getNick() + " has left...\r\n";
+        } else {
+          msg += req.getAddi() + "\r\n";
+        }
+        send_(serv_, serv_.getClient(j->first), msg, "response: part: ");
+      }
     }
     return;
   }
@@ -389,10 +492,26 @@ void RequestCallback::kick(Request const &req, RequestPool &requests) {
   if (!errNeedMoreParam(2, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
   } else if (!channelCheck(serv_, param, msg)) { // ERR_NOSUCHCHANNEL
   } else if (!isChannelOper(serv_, client, param, msg)) {// ERR_CHANOPRIVSNEEDED
-  } else if () { // ERR_USERNOTINCHANNEL <- here!!!
+  } else if (!serv_.getChannelMap()[param[0]].isJoined(param[1])) {
+    // ERR_USERNOTINCHANNEL
   } else if (!isClientJoined(serv_, client, param, msg)) { // ERR_NOTONCHANNEL
   } else {
-    // ... make PRIVMSG, kick target
+    Channel &channel = serv_.getChannelMap()[param[0]];
+    Client &kicked = serv_.getClient(param[1]);
+    channel.part(param[1]);
+    kicked.part(param[0]);
+    if (req.getAddi() != "") {
+      msg  = std::string(":") + client.getIdentify() + " ";
+      msg += req.getCommand() + " ";
+      msg += param[1] + " ";
+      msg += param[0] + " ";
+      msg += req.getAddi() + "\r\n";
+      UMstring_bool joined_client = channel.getJoinedClient();
+      UMstring_bool::iterator i;
+      for (i = joined_client.begin(); i != joined_client.end(); ++i) {
+        send_(serv_, serv_.getClient(i->first), msg, "response: kick: ");
+      }
+    }
     return;
   }
   send_(serv_, client, msg, "response: kick: ");
@@ -417,7 +536,7 @@ void RequestCallback::invite(Request const &req, RequestPool &requests) {
     msg += param[1] + " ";
     msg += ":is already on channel\r\n";
   } else if (channel.getInviteOnly() &&
-      !isChannelOper(serv_, client, param, msg)) {// ERR_CHANOPRIVSNEEDED
+      !isChannelOper(serv_, client, param, msg)) { // ERR_CHANOPRIVSNEEDED
   } else { // RPL_INVITING
     msg += "341 ";
     msg += param[1] + " ";
@@ -438,7 +557,15 @@ void RequestCallback::accept(Request const &req, RequestPool &requests) {
   } else {
     Channel &channel = serv_.getChannelMap()[param[0]];
     if (!channel.isInvite(client.getNick())) { return; }
-    // ... make JOIN
+    Vstring param2;
+    param2.push_back(param[0]);
+    requests.push(makeRequest(Request::kJoin,
+                              req.getRequesterSocket(),
+                              req.getTargetSocket(),
+                              "JOIN",
+                              req.getAddi(),
+                              param2,
+                              true));
     return;
   }
   send_(serv_, client, msg, "response: accept: ");
@@ -477,7 +604,7 @@ void RequestCallback::topic(Request const &req, RequestPool &requests) {
     } else { // RPL_TOPIC  
       msg += "332 ";
       msg += param[0] + " ";
-      msg += ":" + channel.getTopic() + "\r\n";
+      msg += std::string(":") + channel.getTopic() + "\r\n";
     }
   }
   send_(serv_, client, msg, "response: topic: ");
@@ -504,13 +631,10 @@ void RequestCallback::mode(Request const &req, RequestPool &requests) {
     if (param[1][1] == 'o') {
       if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
         // ERR_NEEDMOREPARAM
-      } else if () { // ERR_USERNOTINCHANNEL <- here!!!
+      } else if (serv_.getChannelMap()[param[0]].isJoined(param[2])) {
+        // ERR_USERNOTINCHANNEL
       } else { // RPL_CHANNELMODEIS
-        msg += "324 ";
-        for (int i = 0; i < param.size(); ++i) {
-          msg += param[i] + " ";
-        }
-        msg += "\r\n";
+        rplChannelModeIs(param, msg);
         if (param[1][0] == '+') {
           channel.addOperator(param[2]);
         } else {
@@ -518,48 +642,40 @@ void RequestCallback::mode(Request const &req, RequestPool &requests) {
         }
       }
     } else if (param[1][1] == 'i') {
-      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+      if (!errNeedMoreParam(2, req.getCommand(), param, msg)) {
         // ERR_NEEDMOREPARAM
-      } else if () { // ERR_USERNOTINCHANNEL
       } else { // RPL_CHANNELMODEIS
-        msg += "324 ";
-        for (int i = 0; i < param.size(); ++i) {
-          msg += param[i] + " ";
-        }
-        msg += "\r\n";
+        rplChannelModeIs(param, msg);
+        channel.setInviteOnly(param[1][0] == '+');
       }
     } else if (param[1][1] == 't') {
-      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+      if (!errNeedMoreParam(2, req.getCommand(), param, msg)) {
         // ERR_NEEDMOREPARAM
-      } else if () { // ERR_USERNOTINCHANNEL
       } else { // RPL_CHANNELMODEIS
-        msg += "324 ";
-        for (int i = 0; i < param.size(); ++i) {
-          msg += param[i] + " ";
-        }
-        msg += "\r\n";
+        rplChannelModeIs(param, msg);
+        channel.setOperTopic(param[1][0] == '+');
       }
     } else if (param[1][1] == 'k') {
-      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+      if (!errNeedMoreParam(
+            param[1][0] == '+' ? 3 : 2, req.getCommand(), param, msg)) {
         // ERR_NEEDMOREPARAM
-      } else if () { // ERR_USERNOTINCHANNEL
       } else { // RPL_CHANNELMODEIS
-        msg += "324 ";
-        for (int i = 0; i < param.size(); ++i) {
-          msg += param[i] + " ";
+        rplChannelModeIs(param, msg);
+        channel.setHasPassword(param[1][0] == '+');
+        if (param[1][0] == '+') {
+          channel.setPassword(param[2]);
         }
-        msg += "\r\n";
       }
     } else {
-      if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
+      if (!errNeedMoreParam(
+            param[1][0] == '+' ? 3 : 2, req.getCommand(), param, msg)) {
         // ERR_NEEDMOREPARAM
-      } else if () { // ERR_USERNOTINCHANNEL
       } else { // RPL_CHANNELMODEIS
-        msg += "324 ";
-        for (int i = 0; i < param.size(); ++i) {
-          msg += param[i] + " ";
+        rplChannelModeIs(param, msg);
+        channel.setHasLimit(param[1][0] == '+');
+        if (param[1][0] == '+') {
+          channel.setLimit(string_to<std::size_t>(param[2]));
         }
-        msg += "\r\n";
       }
     }
   }

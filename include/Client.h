@@ -7,8 +7,10 @@ typedef std::unordered_map<std::string, bool> UMstring_bool;
 
 class Client {
  public:
-  Client() : auth_(), sock_(-1), nick_("*"), user_("*"),
-             real_("*"), host_("*"), can_write_() {
+  Client() : auth_(), sock_(-1),
+             nick_("*"), user_("*"),
+             real_("*"), host_("*"),
+             can_write_() {
     bzero(&addr_, sizeof(struct sockaddr_in));
   }
   ~Client() {}
