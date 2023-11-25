@@ -32,6 +32,10 @@ static bool parse(std::string &buffer_total,
   p += 2;
   buffer_total = buffer_total.substr(p, buffer_total.size() - p);
 
+#ifdef _DEBUG_
+  std::cout << buffer << std::endl;
+#endif
+
   std::stringstream ss;
   std::string word;
   ss << buffer;
@@ -147,7 +151,7 @@ bool Client::makeRequest() {
     request_code = Request::kPrivMsg;
     target = param[0];
   } else if (command == "JOIN") {
-    request_code = Request::kNames;
+    request_code = Request::kJoin;
   } else if (command == "NAMES") {
     request_code = Request::kNames;
   } else if (command == "PART") {

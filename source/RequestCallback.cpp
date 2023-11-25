@@ -9,6 +9,11 @@ static void send_(Server &serv,
   if (!client.canWrite()) {
     throw std::runtime_error("can't write");
   }
+
+#ifdef _DEBUG_
+  std::cout << msg << std::endl;
+#endif
+
   if (send(client.getSocket(),
            msg.c_str(),
            msg.size(),
@@ -192,33 +197,78 @@ void RequestCallback::operator()(Request const &req, RequestPool &requests) {
   }
   UMint_Client &connection = serv_.getConnection();
   if (connection.find(req.getRequesterSocket()) != connection.end()) {
+#ifdef _DEBUG_
+    std::cout << "exist client: ";
+#endif
     if (code == Request::kUnknown) {
+#ifdef _DEBUG_
+      std::cout << "unknown()" << std::endl;
+#endif
       unknown(req, requests);
     } else if (code == Request::kPass) {
+#ifdef _DEBUG_
+      std::cout << "pass()" << std::endl;
+#endif
       pass(req, requests);
     } else if (code == Request::kNick) {
+#ifdef _DEBUG_
+      std::cout << "nick()" << std::endl;
+#endif
       nick(req, requests);
     } else if (code == Request::kUser) {
+#ifdef _DEBUG_
+      std::cout << "user()" << std::endl;
+#endif
       user(req, requests);
     } else if (code == Request::kPrivMsg) {
+#ifdef _DEBUG_
+      std::cout << "privmsg()" << std::endl;
+#endif
       privMsg(req, requests);
     } else if (code == Request::kJoin) {
+#ifdef _DEBUG_
+      std::cout << "join()" << std::endl;
+#endif
       join(req, requests);
     } else if (code == Request::kNames) {
+#ifdef _DEBUG_
+      std::cout << "names()" << std::endl;
+#endif
       names(req, requests);
     } else if (code == Request::kPart) {
+#ifdef _DEBUG_
+      std::cout << "part()" << std::endl;
+#endif
       part(req, requests);
     } else if (code == Request::kKick) {
+#ifdef _DEBUG_
+      std::cout << "kick()" << std::endl;
+#endif
       kick(req, requests);
     } else if (code == Request::kInvite) {
+#ifdef _DEBUG_
+      std::cout << "invite()" << std::endl;
+#endif
       invite(req, requests);
     } else if (code == Request::kAccept) {
+#ifdef _DEBUG_
+      std::cout << "accept()" << std::endl;
+#endif
       accept(req, requests);
     } else if (code == Request::kDeny) {
+#ifdef _DEBUG_
+      std::cout << "deny()" << std::endl;
+#endif
       deny(req, requests);
     } else if (code == Request::kTopic) {
+#ifdef _DEBUG_
+      std::cout << "topic()" << std::endl;
+#endif
       topic(req, requests);
     } else if (code == Request::kMode) {
+#ifdef _DEBUG_
+      std::cout << "mode()" << std::endl;
+#endif
       mode(req, requests);
     }
   }
@@ -271,8 +321,9 @@ void RequestCallback::nick(Request const &req, RequestPool &requests) {
     msg += param[0] + " ";
     msg += ":Nickname is already in use\r\n";
   } else {
-    client.setNick(param[0]);
+    nick_to_sock.erase(client.getNick());
     nick_to_sock[param[0]] = client.getSocket();
+    client.setNick(param[0]);
     auth(serv_, client);
     return;
   }
@@ -397,7 +448,8 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
     msg += param[0] + " ";
     msg += ":Cannot join channel (+k)\r\n";
   } else if (channel.getHasLimit() &&
-      channel.getJoinedClient().size() >= channel.getLimit()) { // ERR_CHANNELISFULL
+      channel.getJoinedClient().size() >= channel.getLimit()) {
+    // ERR_CHANNELISFULL
     msg += "471 ";
     msg += param[0] + " ";
     msg += ":Cannot join channel (+l)\r\n";

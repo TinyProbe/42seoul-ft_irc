@@ -3,21 +3,11 @@
 namespace irc {
 
 void Program::run(int argc, char **argv) {
-  if (argc != 3) { throw std::runtime_error("./ircserv <port> <password>"); }
-  try {
-    init(argv);
-    loop();
-  } catch (std::exception const &e) {
-    UMint_Client &connection = serv_.getConnection();
-    UMint_Client::iterator i;
-    for (i = connection.begin(); i != connection.end(); ++i) {
-      close(i->first);
-    }
-    if (serv_.getSocket() != -1) {
-      close(serv_.getSocket());
-    }
-    throw e;
+  if (argc != 3) {
+    throw std::runtime_error("./ircserv <port> <password>");
   }
+  init(argv);
+  loop();
 }
 
 void Program::init(char **argv) {

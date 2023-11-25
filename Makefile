@@ -44,7 +44,7 @@ ifeq ($(ARG.RELEASE),1)
   CONFIG    = release
 else ifeq ($(ARG.DEBUG),1)
   # debug에 특화된 설정을 한다.
-  CXXFLAGS += -g2 -D_DEBUG_
+  CXXFLAGS += -g3 -D_DEBUG_
   CONFIG    = debug
 endif
 

@@ -2,7 +2,7 @@
 #define IRCSERV_CLIENT_H_
 
 #include <string>
-#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include "Request.h"
 

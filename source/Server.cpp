@@ -65,7 +65,7 @@ UMstring_Channel &Server::getChannelMap() { return channel_map_; }
 Client &Server::getClient(int sock) {
   UMint_Client::iterator it = connection_.find(sock);
   if (it == connection_.end()) {
-    throw std::runtime_error(std::string("getClient: invalid key"));
+    throw std::runtime_error("getClient: invalid key");
   }
   return it->second;
 }
@@ -73,14 +73,14 @@ Client &Server::getClient(int sock) {
 Client &Server::getClient(std::string const &nick) {
   UMstring_int::iterator it = nick_to_sock_.find(nick);
   if (it == nick_to_sock_.end()) {
-    throw std::runtime_error(std::string("getClient: invalid key"));
+    throw std::runtime_error("getClient: invalid key");
   }
   return connection_[it->second];
 }
 
 void Server::setPort(int port) {
   if (port < 0 || port > 65535) {
-    throw std::runtime_error(std::string("port: 0 <= port <= 65535"));
+    throw std::runtime_error("port: 0 <= port <= 65535");
   }
   port_ = port;
   size_t pos = host_.find(':');
@@ -93,12 +93,11 @@ void Server::setPort(int port) {
 
 void Server::setPassword(std::string const &password) {
   if (password.size() < 6 || password.size() > 16) {
-    throw std::runtime_error(std::string("password: 6 <= password <= 16"));
+    throw std::runtime_error("password: 6 <= password <= 16");
   }
   for (int i = 0; i < (int)password.size(); ++i) {
     if (!isprint(password[i])) {
-      throw std::runtime_error(
-          std::string("password: format error(unprintable)"));
+      throw std::runtime_error("password: format error(unprintable)");
     }
   }
   password_ = password;
@@ -154,8 +153,8 @@ int Server::accept() {
   bzero(&client_len, sizeof(socklen_t));
 
   if ((client_sock = ::accept(sock_,
-                            (struct sockaddr *) &client_addr,
-                            &client_len)) == -1) {
+                              (struct sockaddr *) &client_addr,
+                              &client_len)) == -1) {
     if (errno == EWOULDBLOCK) {
       std::cerr << std::string("accept: ") +
                    std::string(strerror(errno)) << std::endl;
