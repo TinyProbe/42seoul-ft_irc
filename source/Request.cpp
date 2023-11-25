@@ -1,37 +1,49 @@
-#include "Request.h"
+#include "common.h"
 
 namespace irc {
 
-int getRequestCode() const { return request_code_; }
+Request &Request::operator=(Request const &rhs) {
+  if (this == &rhs) { return *this; }
+  request_code_   = rhs.request_code_;
+  requester_sock_ = rhs.requester_sock_;
+  target_         = rhs.target_;
+  command_        = rhs.command_;
+  addi_           = rhs.addi_;
+  param_          = rhs.param_;
+  is_derived_     = rhs.is_derived_;
+  return *this;
+}
 
-int getRequesterSocket() const { return requester_sock_; }
+int Request::getRequestCode() const { return request_code_; }
 
-int getTargetSocket() const { return target_sock_; }
+int Request::getRequesterSocket() const { return requester_sock_; }
 
-void setRequestCode(int request_code) { request_code_ = request_code; }
+std::string const &Request::getTarget() const { return target_; }
 
-void setRequesterSocket(int requester_sock) {
+void Request::setRequestCode(int request_code) { request_code_ = request_code; }
+
+void Request::setRequesterSocket(int requester_sock) {
   requester_sock_ = requester_sock;
 }
 
-void setTargetSocket(int target_sock) { target_sock_ = target_sock; }
+void Request::setTarget(std::string const &target) { target_ = target; }
 
-std::string const &getCommand() const { return command_; }
+std::string const &Request::getCommand() const { return command_; }
 
-std::string const &getAddi() const { return addi_; }
+std::string const &Request::getAddi() const { return addi_; }
 
-Vstring const &getParam() const { return param_; }
+Vstring const &Request::getParam() const { return param_; }
 
-void setCommand(std::string const &command) { command_ = command; }
+void Request::setCommand(std::string const &command) { command_ = command; }
 
-void setAddi(std::string const &addi) { addi_ = addi; }
+void Request::setAddi(std::string const &addi) { addi_ = addi; }
 
-void setParam(Vstring const &param) { param_ = param; }
+void Request::setParam(Vstring const &param) { param_ = param; }
 
-void addParam(std::string const &param) { param_.push_back(param); }
+void Request::addParam(std::string const &param) { param_.push_back(param); }
 
-bool isDerived() const { return is_derived_; }
+bool Request::isDerived() const { return is_derived_; }
 
-void setDerived(bool is_derived) { is_derived_ = is_derived; }
+void Request::setDerived(bool is_derived) { is_derived_ = is_derived; }
 
 } // namespace irc

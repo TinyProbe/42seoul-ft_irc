@@ -1,12 +1,12 @@
-#include "EventPool.h"
+#include "common.h"
 
 namespace irc {
 
-std::size_t EventPool::getCapacity() const {
+size_t EventPool::getCapacity() const {
   return new_events_.size();
 }
 
-void EventPool::setCapacity(std::size_t cap) {
+void EventPool::setCapacity(size_t cap) {
   new_events_.resize(cap);
 }
 

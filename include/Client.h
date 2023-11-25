@@ -1,6 +1,11 @@
 #ifndef IRCSERV_CLIENT_H_
 #define IRCSERV_CLIENT_H_
 
+#include <string>
+#include <sys/socket.h>
+
+#include "Request.h"
+
 namespace irc {
 
 typedef std::unordered_map<std::string, bool> UMstring_bool;

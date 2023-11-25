@@ -1,10 +1,20 @@
 #ifndef IRCSERV_SERVER_H_
 #define IRCSERV_SERVER_H_
 
+#include <unordered_map>
+#include <string>
+
+#include "Client.h"
+#include "Channel.h"
+#include "RequestCallback.h"
+
 namespace irc {
 
-typedef std::unordered_map<int, Client>          UMint_Client; // connection_
-typedef std::unordered_map<std::string, int>     UMstring_int; // nick_to_sock_
+class Request;
+class RequestPool;
+
+typedef std::unordered_map<int, Client> UMint_Client; // connection_
+typedef std::unordered_map<std::string, int> UMstring_int; // nick_to_sock_
 typedef std::unordered_map<std::string, Channel> UMstring_Channel; // channel_map_
 
 class Server {

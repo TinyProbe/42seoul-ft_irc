@@ -1,9 +1,15 @@
 #ifndef IRCSERV_REQUESTCALLBACK_H_
 #define IRCSERV_REQUESTCALLBACK_H_
 
+#include <vector>
+#include <string>
+
 namespace irc {
 
-typedef void (*RequestFunc)(Request const &, RequestPool &);
+class Server;
+class Request;
+class RequestPool;
+
 typedef std::vector<std::string> Vstring;
 
 class RequestCallback {
@@ -21,16 +27,15 @@ class RequestCallback {
   void privMsg(Request const &req, RequestPool &requests); // derive: privMsg
   void join(Request const &req, RequestPool &requests); // derive: join   add: topic, names, part
   void names(Request const &req, RequestPool &requests);
-  void part(Request const &req, RequestPool &requests); // add: privMsg
-  void kick(Request const &req, RequestPool &requests); // add: privMsg
-  void invite(Request const &req, RequestPool &requests);
+  void part(Request const &req, RequestPool &requests);
+  void kick(Request const &req, RequestPool &requests);
+  void invite(Request const &req, RequestPool &requests); 
   void accept(Request const &req, RequestPool &requests);
   void deny(Request const &req, RequestPool &requests);
   void topic(Request const &req, RequestPool &requests);
   void mode(Request const &req, RequestPool &requests);
 
   Server &serv_;
-  std::vector<RequestFunc> callbacks_;
 };
 
 } // namespace irc

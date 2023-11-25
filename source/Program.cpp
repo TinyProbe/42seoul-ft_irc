@@ -1,13 +1,11 @@
-#include "Program.h"
+#include "common.h"
 
 namespace irc {
 
 void Program::run(int argc, char **argv) {
-  if (argc != 3) {
-    throw std::runtime_error("./ircserv <port> <password>");
-  }
+  if (argc != 3) { throw std::runtime_error("./ircserv <port> <password>"); }
   try {
-    init(argc, argv);
+    init(argv);
     loop();
   } catch (std::exception const &e) {
     UMint_Client &connection = serv_.getConnection();
@@ -15,16 +13,16 @@ void Program::run(int argc, char **argv) {
     for (i = connection.begin(); i != connection.end(); ++i) {
       close(i->first);
     }
-    if ((int sock = serv_.getSocket()) != -1) {
-      close(sock);
+    if (serv_.getSocket() != -1) {
+      close(serv_.getSocket());
     }
     throw e;
   }
 }
 
-void Program::init(int argc, char **argv) {
-  serv_.setPort(string_to<int>(std::string(argv[1])));
-  serv_.setPassword(std::string(argv[2]));
+void Program::init(char **argv) {
+  serv_.setPort(string_to<int>(argv[1]));
+  serv_.setPassword(argv[2]);
   serv_.standby();
 
   events_.changeEvent(serv_.getSocket(), EVFILT_READ, EV_ADD);
@@ -38,11 +36,11 @@ void Program::loop() {
     serv_.preProcess();
     // create Request
     while (events_.pollEvent(ev)) { request(ev); }
-    // response and create derived request
+    // response and create request
     int size = requests_.getSize();
     while (size--) {
       requests_.pollRequest(req);
-      response(req, requests_);
+      response(req);
     }
   }
 }

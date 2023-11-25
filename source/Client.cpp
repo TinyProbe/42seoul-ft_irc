@@ -1,13 +1,13 @@
-#include "Client.h"
+#include "common.h"
 
 namespace irc {
 
-static int const Client::kMaxChannel = 50;
+int const Client::kMaxChannel = 50;
 static int const kMaxBuffer = (1 << 20);
 
 static Request makeRequest_(int request_code,
                             int requester_sock,
-                            int target_sock,
+                            std::string const &target,
                             std::string const &command,
                             std::string const &addi,
                             Vstring const &param,
@@ -15,12 +15,36 @@ static Request makeRequest_(int request_code,
   Request req;
   req.setRequestCode(request_code);
   req.setRequesterSocket(requester_sock);
-  req.setTargetSocket(target_sock);
+  req.setTarget(target);
   req.setCommand(command);
   req.setAddi(addi);
   req.setParam(param);
   req.setDerived(is_derived);
   return req;
+}
+
+static bool parse(std::string &buffer_total,
+                  std::string &command,
+                  Vstring &param) {
+  size_t p = buffer_total.find("\r\n");
+  if (p == std::string::npos) { return false; }
+  std::string buffer = buffer_total.substr(0, p);
+  p += 2;
+  buffer_total = buffer_total.substr(p, buffer_total.size() - p);
+
+  std::stringstream ss;
+  std::string word;
+  ss << buffer;
+  ss >> word;
+  command = word;
+  while (ss >> word) {
+    if (word[0] == ':') {
+      std::string word2;
+      while (ss >> word2) { word += word2; }
+    }
+    param.push_back(word);
+  }
+  return true;
 }
 
 bool Client::getAuth() const { return auth_; }
@@ -64,7 +88,7 @@ void Client::setReal(std::string const &real) { real_ = real; }
 
 void Client::setHost(std::string const &host) { host_ = host; }
 
-std::string Server::getIdentify() const {
+std::string Client::getIdentify() const {
   return nick_ + "!" + user_ + "@" + host_;
 }
 
@@ -74,9 +98,7 @@ bool Client::canWrite() const { return can_write_; }
 
 void Client::setWrite(bool can_write) { can_write_ = can_write; }
 
-UMstring_bool const &Client::getJoinedChannel() const {
-  return joined_channel_;
-}
+UMstring_bool &Client::getJoinedChannel() { return joined_channel_; }
 
 void Client::join(std::string const &channel) {
   joined_channel_[channel] = true;
@@ -87,10 +109,7 @@ void Client::part(std::string const &channel) {
 }
 
 bool Client::isJoined(std::string const &channel) const {
-  if (joined_channel_.find(channel) != joined_channel_.end()) {
-    return true;
-  }
-  return false;
+  return joined_channel_.find(channel) != joined_channel_.end();
 }
 
 bool Client::receive() {
@@ -111,9 +130,53 @@ bool Client::receive() {
 }
 
 bool Client::makeRequest() {
-  if (buffer_.size() == 0) { return false; }
-  // ... <- here!!!
-  request_ = makeRequest_();
+  int request_code = 0;
+  int requester_sock = sock_;
+  std::string command;
+  std::string target;
+  std::string addi;
+  Vstring param;
+  if (!parse(buffer_, command, param)) { return false; }
+  if (command == "PASS") {
+    request_code = Request::kPass;
+  } else if (command == "NICK") {
+    request_code = Request::kNick;
+  } else if (command == "USER") {
+    request_code = Request::kUser;
+  } else if (command == "PRIVMSG") {
+    request_code = Request::kPrivMsg;
+    target = param[0];
+  } else if (command == "JOIN") {
+    request_code = Request::kNames;
+  } else if (command == "NAMES") {
+    request_code = Request::kNames;
+  } else if (command == "PART") {
+    request_code = Request::kPart;
+    addi = param.back();
+    param.pop_back();
+  } else if (command == "KICK") {
+    request_code = Request::kKick;
+    addi = param.back();
+    param.pop_back();
+  } else if (command == "INVITE") {
+    request_code = Request::kInvite;
+    target = param[0];
+  } else if (command == "ACCEPT") {
+    request_code = Request::kAccept;
+  } else if (command == "DENY") {
+    request_code = Request::kDeny;
+  } else if (command == "TOPIC") {
+    request_code = Request::kTopic;
+    addi = param.back();
+    param.pop_back();
+  } else if (command == "MODE") {
+    request_code = Request::kMode;
+  } else {
+    request_code = Request::kUnknown;
+  }
+  request_ = makeRequest_(request_code,
+                          requester_sock,
+                          target, command, addi, param, false);
   return true;
 }
 

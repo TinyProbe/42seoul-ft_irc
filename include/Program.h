@@ -1,7 +1,17 @@
 #ifndef IRCSERV_PROGRAM_H_
 #define IRCSERV_PROGRAM_H_
 
+#include <string>
+
+#include "Server.h"
+#include "EventPool.h"
+#include "RequestPool.h"
+
+struct kevent;
+
 namespace irc {
+
+class Request;
 
 class Program {
  public:
@@ -11,7 +21,7 @@ class Program {
   void run(int argc, char **argv);
 
  private:
-  void init(int argc, char **argv);
+  void init(char **argv);
   void loop();
   void request(struct kevent const &ev);
   void response(Request const &req);

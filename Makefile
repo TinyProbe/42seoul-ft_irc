@@ -82,6 +82,7 @@ endif
 ##################################
 # include/...
 INC_LST = \
+					common.h \
 					Program.h \
 					Server.h \
 					Client.h \

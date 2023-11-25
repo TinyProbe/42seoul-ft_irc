@@ -1,6 +1,12 @@
 #ifndef IRCSERV_EVENTPOOL_H_
 #define IRCSERV_EVENTPOOL_H_
 
+#include <sys/event.h>
+
+#include <vector>
+#include <string>
+#include <stdexcept>
+
 namespace irc {
 
 class EventPool {
@@ -13,8 +19,8 @@ class EventPool {
   }
   ~EventPool() {}
 
-  std::size_t getCapacity() const;
-  void setCapacity(std::size_t cap);
+  size_t getCapacity() const;
+  void setCapacity(size_t cap);
 
   void changeEvent(int ident, int filter, int flags);
   bool pollEvent(struct kevent &ev);

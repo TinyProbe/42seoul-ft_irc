@@ -1,7 +1,4 @@
-#include <iostream>
-#include <stdexcept>
-
-#include "Program.h"
+#include "common.h"
 
 int main(int argc, char **argv) {
   try {

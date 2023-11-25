@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "common.h"
 
 namespace irc {
 
@@ -83,7 +83,7 @@ void Server::setPort(int port) {
     throw std::runtime_error(std::string("port: 0 <= port <= 65535"));
   }
   port_ = port;
-  std::size_t pos = host_.find(':');
+  size_t pos = host_.find(':');
   if (pos != std::string::npos) {
     host_.resize(pos);
   }
@@ -95,7 +95,7 @@ void Server::setPassword(std::string const &password) {
   if (password.size() < 6 || password.size() > 16) {
     throw std::runtime_error(std::string("password: 6 <= password <= 16"));
   }
-  for (int i = 0; i < password.size(); ++i) {
+  for (int i = 0; i < (int)password.size(); ++i) {
     if (!isprint(password[i])) {
       throw std::runtime_error(
           std::string("password: format error(unprintable)"));
@@ -113,7 +113,7 @@ void Server::standby() {
 
   if ((sock_ = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
     throw std::runtime_error(std::string("socket: ") +
-                             std::string(strerror(errno));
+                             std::string(strerror(errno)));
   }
   fcntl(sock_, F_SETFL, O_NONBLOCK);
 
@@ -130,12 +130,12 @@ void Server::standby() {
            (struct sockaddr *) &serv_addr,
            sizeof(struct sockaddr_in)) == -1) {
     throw std::runtime_error(std::string("bind: ") +
-                             std::string(strerror(errno));
+                             std::string(strerror(errno)));
   }
 
   if (listen(sock_, kMaxBacklog) == -1) {
     throw std::runtime_error(std::string("listen: ") +
-                             std::string(strerror(errno));
+                             std::string(strerror(errno)));
   }
 }
 
@@ -153,12 +153,12 @@ int Server::accept() {
   bzero(&client_addr, sizeof(struct sockaddr_in));
   bzero(&client_len, sizeof(socklen_t));
 
-  if ((client_sock = accept(sock_,
+  if ((client_sock = ::accept(sock_,
                             (struct sockaddr *) &client_addr,
                             &client_len)) == -1) {
     if (errno == EWOULDBLOCK) {
       std::cerr << std::string("accept: ") +
-                   std::string(strerror(errno) << std::endl;
+                   std::string(strerror(errno)) << std::endl;
     } else {
       throw std::runtime_error(std::string("accept: ") +
                                std::string(strerror(errno)));
@@ -183,12 +183,12 @@ void Server::disconnect(int sock) {
   UMint_Client::iterator it = connection_.find(sock);
   if (it != connection_.end()) {
     close(it->first);
-    nick_to_sock_.erase(it->second.getNickname());
+    nick_to_sock_.erase(it->second.getNick());
     connection_.erase(it);
 
     UMstring_Channel::iterator i;
     for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
-      i->second.part(sock);
+      i->second.part(it->second.getNick());
     }
   }
 }

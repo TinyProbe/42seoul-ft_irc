@@ -1,6 +1,9 @@
 #ifndef IRCSERV_CHANNEL_H_
 #define IRCSERV_CHANNEL_H_
 
+#include <unordered_map>
+#include <string>
+
 namespace irc {
 
 typedef std::unordered_map<std::string, bool> UMstring_bool;
@@ -10,7 +13,7 @@ class Channel {
   Channel() : invite_only_(),
               oper_topic_(),
               has_password_(),
-              user_limit_(),
+              has_limit_(),
               limit_() {}
   ~Channel() {}
 
@@ -23,13 +26,13 @@ class Channel {
 
   UMstring_bool &getJoinedClient();
   bool isJoined(std::string const &nick) const;
-  bool join(std::string const &nick);
+  void join(std::string const &nick);
   void part(std::string const &nick);
 
   void setOrigin(std::string const &nick);
   void addOperator(std::string const &nick);
   void delOperator(std::string const &nick);
-  int isOperator(std::string const &nick);
+  int isOperator(std::string const &nick) const;
 
   bool getInviteOnly() const;
   bool getOperTopic() const;
@@ -44,8 +47,8 @@ class Channel {
   void setTopic(std::string const &topic);
   bool verify(std::string const &password) const;
   void setPassword(std::string const &password);
-  std::size_t getLimit() const;
-  void setLimit(std::size_t limit);
+  size_t getLimit() const;
+  void setLimit(size_t limit);
 
  private:
   std::string name_;
@@ -62,7 +65,7 @@ class Channel {
   bool        has_limit_;
   std::string topic_;
   std::string password_;
-  std::size_t limit_;
+  size_t      limit_;
 };
 
 } // namespace irc

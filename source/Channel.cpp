@@ -1,4 +1,4 @@
-#UMint_Clientinclude "Channel.h"
+#include "common.h"
 
 namespace irc {
 
@@ -8,7 +8,7 @@ void Channel::setName(std::string const &name) { name_ = name; }
 
 void Channel::addInvite(std::string const &nick) { invite_list_[nick] = true; }
 
-void Channel::delInvite(std::string const &nick) { invite_list_.erase(nick) }
+void Channel::delInvite(std::string const &nick) { invite_list_.erase(nick); }
 
 bool Channel::isInvited(std::string const &nick) const {
   return invite_list_.find(nick) != invite_list_.end();
@@ -20,10 +20,7 @@ bool Channel::isJoined(std::string const &nick) const {
   return joined_client_.find(nick) != joined_client_.end();
 }
 
-bool Channel::join(std::string const &nick) {
-  if (isBanned(nick)) { return false; }
-  return joined_client_[nick] = true;
-}
+void Channel::join(std::string const &nick) { joined_client_[nick] = true; }
 
 void Channel::part(std::string const &nick) { joined_client_.erase(nick); }
 
@@ -33,7 +30,7 @@ void Channel::addOperator(std::string const &nick) { operator_[nick] = true; }
 
 void Channel::delOperator(std::string const &nick) { operator_.erase(nick); }
 
-int Channel::isOperator(std::string const &nick) {
+int Channel::isOperator(std::string const &nick) const {
   if (origin_ == nick) { return 1; }
   if (operator_.find(nick) != operator_.end()) { return 2; }
   return 0;
@@ -69,7 +66,7 @@ void Channel::setPassword(std::string const &password) {
   if (password.size() < 6 || password.size() > 16) {
     throw std::runtime_error(std::string("password: 6 <= password <= 16"));
   }
-  for (int i = 0; i < password.size(); ++i) {
+  for (int i = 0; i < (int)password.size(); ++i) {
     if (!isprint(password[i])) {
       throw std::runtime_error(
           std::string("password: format error(unprintable)"));
@@ -78,8 +75,8 @@ void Channel::setPassword(std::string const &password) {
   password_ = password;
 }
 
-std::size_t Channel::getLimit() const { return limit_; }
+size_t Channel::getLimit() const { return limit_; }
 
-void Channel::setLimit(std::size_t limit) { limit_ = limit; }
+void Channel::setLimit(size_t limit) { limit_ = limit; }
 
 } // namespace irc
