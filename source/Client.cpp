@@ -23,28 +23,30 @@ static Request makeRequest_(int request_code,
   return req;
 }
 
-static bool parse(std::string &buffer_total,
+static bool parse(std::string &buffer,
                   std::string &command,
                   Vstring &param) {
-  size_t p = buffer_total.find("\r\n");
+  size_t p = buffer.find("\r\n");
   if (p == std::string::npos) { return false; }
-  std::string buffer = buffer_total.substr(0, p);
+  std::string msg = buffer.substr(0, p);
   p += 2;
-  buffer_total = buffer_total.substr(p, buffer_total.size() - p);
+  buffer = buffer.substr(p, buffer.size() - p);
 
 #ifdef _DEBUG_
-  std::cout << buffer << std::endl;
+  std::cout << msg << std::endl;
 #endif
 
   std::stringstream ss;
   std::string word;
-  ss << buffer;
+  ss << msg;
   ss >> word;
   command = word;
   while (ss >> word) {
     if (word[0] == ':') {
-      std::string word2;
-      while (ss >> word2) { word += word2; }
+      size_t p2 = msg.find(':');
+      word = msg.substr(p2, msg.size() - p2);
+      param.push_back(word);
+      break;
     }
     param.push_back(word);
   }
@@ -156,8 +158,10 @@ bool Client::makeRequest() {
     request_code = Request::kNames;
   } else if (command == "PART") {
     request_code = Request::kPart;
-    addi = param.back();
-    param.pop_back();
+    if (param.size() == 2) {
+      addi = param.back();
+      param.pop_back();
+    }
   } else if (command == "KICK") {
     request_code = Request::kKick;
     addi = param.back();
@@ -171,8 +175,12 @@ bool Client::makeRequest() {
     request_code = Request::kDeny;
   } else if (command == "TOPIC") {
     request_code = Request::kTopic;
-    addi = param.back();
-    param.pop_back();
+    if (param.size() == 2) {
+      addi = param.back();
+      param.pop_back();
+    } else if (param.size() > 0 && param[0][0] != '#') {
+      param.pop_back();
+    }
   } else if (command == "MODE") {
     request_code = Request::kMode;
   } else {

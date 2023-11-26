@@ -59,10 +59,10 @@ static bool nickCheck(std::string const &nick) {
 
 static bool targetCheck(Server &serv, std::string const &target) {
   if (target[0] == '#') {
-    UMstring_Channel const &channel_map = serv.getChannelMap();
+    UMstring_Channel &channel_map = serv.getChannelMap();
     return channel_map.find(target) != channel_map.end();
   } else {
-    UMint_Client const &connection = serv.getConnection();
+    UMint_Client &connection = serv.getConnection();
     return connection.find(serv.getNickToSock()[target]) != connection.end();
   }
 }
@@ -79,57 +79,48 @@ static bool verify(Server &serv, Client const &client) {
 }
 
 static bool channelCheck(Server &serv,
-                         Vstring const &param,
+                         std::string const &channel,
                          std::string &msg) {
-  UMstring_Channel const &channel_map = serv.getChannelMap();
-  for (int i = 0; i < (int)param.size(); ++i) {
-    if (param[i][0] != '#') { continue; }
-    if (channel_map.find(param[i]) == channel_map.end()) {
-      msg += "403 ";
-      msg += param[i] + " ";
-      msg += ":No such channel\r\n";
-      return false;
-    }
+  UMstring_Channel &channel_map = serv.getChannelMap();
+  if (channel_map.find(channel) == channel_map.end()) {
+    msg += "403 ";
+    msg += channel + " ";
+    msg += ":No such channel\r\n";
+    return false;
   }
   return true;
 }
 
 static bool isClientJoined(Server &serv,
                            Client &client,
-                           Vstring const &param,
+                           std::string const &channel,
                            std::string &msg) {
-  UMstring_Channel const &channel_map = serv.getChannelMap();
-  UMstring_bool const &joined_channel = client.getJoinedChannel();
-  for (int i = 0; i < (int)param.size(); ++i) {
-    if (param[i][0] != '#') { continue; }
-    UMstring_Channel::const_iterator it = channel_map.find(param[i]);
-    if (it == channel_map.end()) { return false; }
-    if (!it->second.isJoined(client.getNick()) ||
-        joined_channel.find(param[i]) == joined_channel.end()) {
-      msg += "442 ";
-      msg += param[i] + " ";
-      msg += ":You're not on that channel\r\n";
-      return false;
-    }
+  UMstring_Channel &channel_map = serv.getChannelMap();
+  UMstring_bool &joined_channel = client.getJoinedChannel();
+  UMstring_Channel::iterator it = channel_map.find(channel);
+  if (it == channel_map.end()) { return false; }
+  if (!it->second.isJoined(client.getNick()) ||
+      joined_channel.find(channel) == joined_channel.end()) {
+    msg += "442 ";
+    msg += channel + " ";
+    msg += ":You're not on that channel\r\n";
+    return false;
   }
   return true;
 }
 
 static bool isChannelOper(Server &serv,
                           Client &client,
-                          Vstring const &param,
+                          std::string const &channel,
                           std::string &msg) {
-  UMstring_Channel const &channel_map = serv.getChannelMap();
-  for (int i = 0; i < (int)param.size(); ++i) {
-    if (param[i][0] != '#') { continue; }
-    UMstring_Channel::const_iterator it = channel_map.find(param[i]);
-    if (it == channel_map.end()) { continue; }
-    if (!it->second.isOperator(client.getNick())) {
-      msg += "482 ";
-      msg += param[i] + " ";
-      msg += ":You're not channel operator\r\n";
-      return false;
-    }
+  UMstring_Channel &channel_map = serv.getChannelMap();
+  UMstring_Channel::const_iterator it = channel_map.find(channel);
+  if (it == channel_map.end()) { return false; }
+  if (!it->second.isOperator(client.getNick())) {
+    msg += "482 ";
+    msg += channel + " ";
+    msg += ":You're not channel operator\r\n";
+    return false;
   }
   return true;
 }
@@ -321,11 +312,31 @@ void RequestCallback::nick(Request const &req, RequestPool &requests) {
     msg += param[0] + " ";
     msg += ":Nickname is already in use\r\n";
   } else {
+    msg  = std::string(":") + client.getIdentify() + " ";
+    msg += req.getCommand() + " ";
+    msg += param[0] + "\r\n";
+
+    // syncronize with channel
+    UMstring_Channel &channel_map = serv_.getChannelMap();
+    UMstring_bool &joined_channel = client.getJoinedChannel();
+    UMstring_bool::iterator i;
+    for (i = joined_channel.begin(); i != joined_channel.end(); ++i) {
+      Channel &channel = channel_map[i->first];
+      channel.part(client.getNick());
+      channel.join(param[0]);
+      int is_oper = channel.isOperator(client.getNick());
+      if (is_oper == 1) {
+        channel.setOrigin(param[0]);
+      } else if (is_oper == 2) {
+        channel.delOperator(client.getNick());
+        channel.addOperator(param[0]);
+      }
+    }
     nick_to_sock.erase(client.getNick());
     nick_to_sock[param[0]] = client.getSocket();
     client.setNick(param[0]);
+
     auth(serv_, client);
-    return;
   }
   send_(serv_, client, msg, "response: nick: ");
 }
@@ -379,7 +390,8 @@ void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
     msg += ":No such nick/channel\r\n";
   } else { // make PRIVMSG
     if (param[0][0] == '#') { // to channel ...
-      Channel &channel = serv_.getChannelMap()[param[0]];
+      UMstring_Channel &channel_map = serv_.getChannelMap();
+      Channel &channel = channel_map[param[0]];
       UMstring_bool &joined_client = channel.getJoinedClient();
       UMstring_bool::iterator i;
       for (i = joined_client.begin(); i != joined_client.end(); ++i) {
@@ -532,29 +544,28 @@ void RequestCallback::part(Request const &req, RequestPool &requests) {
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
-  } else if (!channelCheck(serv_, param, msg)) { // ERR_NOSUCHCHANNEL
-  } else if (!isClientJoined(serv_, client, param, msg)) { // ERR_NOTONCHANNEL
+  } else if (!channelCheck(serv_, param[0], msg)) { // ERR_NOSUCHCHANNEL
+  } else if (!isClientJoined(serv_, client, param[0], msg)) { // ERR_NOTONCHANNEL
   } else {
+    // send part message
+    msg  = std::string(":") + client.getIdentify() + " ";
+    msg += req.getCommand() + " ";
+    msg += param[0] + " ";
     UMstring_Channel &channel_map = serv_.getChannelMap();
-    for (int i = 0; i < (int)param.size(); ++i) {
-      Channel &channel = channel_map[param[i]];
-      channel.part(client.getNick());
-      client.part(param[i]);
-      // send part message
-      UMstring_bool joined_client = channel.getJoinedClient();
-      UMstring_bool::iterator j;
-      for (j = joined_client.begin(); j != joined_client.end(); ++j) {
-        msg  = std::string(":") + client.getIdentify() + " ";
-        msg += req.getCommand() + " ";
-        msg += param[i] + " ";
-        if (req.getAddi() == "") {
-          msg += client.getNick() + " has left...\r\n";
-        } else {
-          msg += req.getAddi() + "\r\n";
-        }
-        send_(serv_, serv_.getClient(j->first), msg, "response: part: ");
+    Channel &channel = channel_map[param[0]];
+    UMstring_bool joined_client = channel.getJoinedClient();
+    UMstring_bool::iterator i;
+    for (i = joined_client.begin(); i != joined_client.end(); ++i) {
+      if (req.getAddi() == "") {
+        msg += client.getNick() + "\r\n";
+      } else {
+        msg += req.getAddi() + "\r\n";
       }
+      send_(serv_, serv_.getClient(i->first), msg, "response: part: ");
     }
+    channel.part(client.getNick());
+    client.part(param[0]);
+    if (joined_client.empty()) { channel_map.erase(param[0]); }
     return;
   }
   send_(serv_, client, msg, "response: part: ");
@@ -567,16 +578,27 @@ void RequestCallback::kick(Request const &req, RequestPool &requests) {
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(2, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
-  } else if (!channelCheck(serv_, param, msg)) { // ERR_NOSUCHCHANNEL
-  } else if (!isChannelOper(serv_, client, param, msg)) {// ERR_CHANOPRIVSNEEDED
+  } else if (!channelCheck(serv_, param[0], msg)) { // ERR_NOSUCHCHANNEL
+  } else if (!isChannelOper(serv_, client, param[0], msg)) {// ERR_CHANOPRIVSNEEDED
   } else if (!serv_.getChannelMap()[param[0]].isJoined(param[1])) {
     // ERR_USERNOTINCHANNEL
-  } else if (!isClientJoined(serv_, client, param, msg)) { // ERR_NOTONCHANNEL
+    msg += "441 ";
+    msg += client.getNick() + " ";
+    msg += param[0] + " ";
+    msg += ":They aren't on that channel\r\n";
+  } else if (!isClientJoined(serv_, client, param[0], msg)) { // ERR_NOTONCHANNEL
   } else {
+    // make part
+    Vstring param2;
+    param2.push_back(param[0]);
+    requests.push(makeRequest(Request::kPart,
+                              serv_.getClient(param[1]).getSocket(),
+                              "",
+                              "PART",
+                              "",
+                              param2,
+                              false));
     Channel &channel = serv_.getChannelMap()[param[0]];
-    Client &kicked = serv_.getClient(param[1]);
-    channel.part(param[1]);
-    kicked.part(param[0]);
     if (req.getAddi() != "") {
       msg  = std::string(":") + client.getIdentify() + " ";
       msg += req.getCommand() + " ";
@@ -606,7 +628,7 @@ void RequestCallback::invite(Request const &req, RequestPool &requests) {
     msg += "401 ";
     msg += param[0] + " ";
     msg += ":No such nick/channel\r\n";
-  } else if (!isClientJoined(serv_, client, param, msg)) { // ERR_NOTONCHANNEL
+  } else if (!isClientJoined(serv_, client, param[1], msg)) { // ERR_NOTONCHANNEL
   } else if (channel.isJoined(param[0]) && client.isJoined(param[1])) {
     // ERR_USERONCHANNEL
     msg += "443 ";
@@ -614,7 +636,7 @@ void RequestCallback::invite(Request const &req, RequestPool &requests) {
     msg += param[1] + " ";
     msg += ":is already on channel\r\n";
   } else if (channel.getInviteOnly() &&
-      !isChannelOper(serv_, client, param, msg)) { // ERR_CHANOPRIVSNEEDED
+      !isChannelOper(serv_, client, param[1], msg)) { // ERR_CHANOPRIVSNEEDED
   } else { // RPL_INVITING
     msg += "341 ";
     msg += param[1] + " ";
@@ -631,7 +653,7 @@ void RequestCallback::accept(Request const &req, RequestPool &requests) {
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
-  } else if (!channelCheck(serv_, param, msg)) { // ERR_NOSUCHCHANNEL
+  } else if (!channelCheck(serv_, param[0], msg)) { // ERR_NOSUCHCHANNEL
   } else {
     Channel &channel = serv_.getChannelMap()[param[0]];
     if (!channel.isInvited(client.getNick())) { return; }
@@ -656,7 +678,7 @@ void RequestCallback::deny(Request const &req, RequestPool &requests) {
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
-  } else if (!channelCheck(serv_, param, msg)) { // ERR_NOSUCHCHANNEL
+  } else if (!channelCheck(serv_, param[0], msg)) { // ERR_NOSUCHCHANNEL
   } else {
     Channel &channel = serv_.getChannelMap()[param[0]];
     channel.delInvite(client.getNick());
@@ -670,21 +692,39 @@ void RequestCallback::topic(Request const &req, RequestPool &requests) {
   Client &client = serv_.getClient(req.getRequesterSocket());
   if (!verify(serv_, client)) { return; }
   Vstring const &param = req.getParam();
+  UMstring_Channel &channel_map = serv_.getChannelMap();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
-  } else if (!isClientJoined(serv_, client, param, msg)) { // ERR_NOTONCHANNEL
-  } else if (serv_.getChannelMap()[param[0]].getOperTopic() &&
-      !isChannelOper(serv_, client, param, msg)) { // ERR_CHANOPRIVSNEEDED
+  } else if (!isClientJoined(serv_, client, param[0], msg)) {// ERR_NOTONCHANNEL
+  } else if (channel_map[param[0]].getOperTopic() &&
+      !isChannelOper(serv_, client, param[0], msg)) { // ERR_CHANOPRIVSNEEDED
   } else {
-    Channel &channel = serv_.getChannelMap()[param[0]];
-    if (channel.getTopic() == "") { // RPL_NOTOPIC
+    Channel &channel = channel_map[param[0]];
+    if (req.getAddi() != "") { // change topic
+      msg  = std::string(":") + client.getIdentify() + " ";
+      msg += req.getCommand() + " ";
+      msg += param[0] + " ";
+      msg += req.getAddi() + "\r\n";
+      UMstring_bool &joined_client = channel.getJoinedClient();
+      UMstring_bool::iterator i;
+      for (i = joined_client.begin(); i != joined_client.end(); ++i) {
+        send_(serv_, serv_.getClient(i->first), msg, "response: topic: ");
+      }
+      std::string const &addi = req.getAddi();
+      if (addi == "\"\"") {
+        channel.setTopic("");
+      } else {
+        channel.setTopic(addi);
+      }
+      return;
+    } else if (channel.getTopic() == "") { // RPL_NOTOPIC
       msg += "331 ";
       msg += param[0] + " ";
       msg += ":No topic is set\r\n";
     } else { // RPL_TOPIC  
       msg += "332 ";
       msg += param[0] + " ";
-      msg += std::string(":") + channel.getTopic() + "\r\n";
+      msg += channel.getTopic() + "\r\n";
     }
   }
   send_(serv_, client, msg, "response: topic: ");
@@ -697,8 +737,8 @@ void RequestCallback::mode(Request const &req, RequestPool &requests) {
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(2, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
-  } else if (!channelCheck(serv_, param, msg)) { // ERR_NOSUCHCHANNEL
-  } else if (!isChannelOper(serv_, client, param, msg)) {// ERR_CHANOPRIVSNEEDED
+  } else if (!channelCheck(serv_, param[0], msg)) { // ERR_NOSUCHCHANNEL
+  } else if (!isChannelOper(serv_, client, param[0], msg)) {// ERR_CHANOPRIVSNEEDED
   } else if (param[1].size() != 2 ||
       (param[1][0] != '-' && param[1][0] != '+') ||
       std::string("oitkl").find(param[1][1]) == std::string::npos) {
@@ -714,6 +754,10 @@ void RequestCallback::mode(Request const &req, RequestPool &requests) {
         // ERR_NEEDMOREPARAM
       } else if (serv_.getChannelMap()[param[0]].isJoined(param[2])) {
         // ERR_USERNOTINCHANNEL
+        msg += "441 ";
+        msg += client.getNick() + " ";
+        msg += param[0] + " ";
+        msg += ":They aren't on that channel\r\n";
       } else { // RPL_CHANNELMODEIS
         rplChannelModeIs(param, msg);
         if (param[1][0] == '+') {

@@ -44,10 +44,10 @@ class Channel {
   void setHasLimit(bool has_limit);
 
   std::string const &getTopic() const;
-  void setTopic(std::string const &topic);
   bool verify(std::string const &password) const;
-  void setPassword(std::string const &password);
   size_t getLimit() const;
+  void setTopic(std::string const &topic);
+  void setPassword(std::string const &password);
   void setLimit(size_t limit);
 
  private:
