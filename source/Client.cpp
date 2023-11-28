@@ -147,25 +147,34 @@ bool Client::makeRequest() {
     request_code = Request::kPass;
   } else if (command == "NICK") {
     request_code = Request::kNick;
+    if (param.size() >= 1 && param[0][0] == ':') {
+      param.resize(0);
+    }
   } else if (command == "USER") {
     request_code = Request::kUser;
   } else if (command == "PRIVMSG") {
     request_code = Request::kPrivMsg;
-    target = param[0];
+    if (param.size() >= 1) {
+      target = param[0];
+    }
   } else if (command == "JOIN") {
     request_code = Request::kJoin;
   } else if (command == "NAMES") {
     request_code = Request::kNames;
   } else if (command == "PART") {
     request_code = Request::kPart;
-    if (param.size() == 2) {
-      addi = param.back();
-      param.pop_back();
+    if (param.size() >= 2) {
+      addi = param[1];
+      param.resize(1);
+    } else if (param.size() >= 1 && param[0][0] == ':') {
+      param.resize(0);
     }
   } else if (command == "KICK") {
     request_code = Request::kKick;
-    addi = param.back();
-    param.pop_back();
+    if (param.size() >= 3) {
+      addi = param[2];
+      param.resize(2);
+    }
   } else if (command == "INVITE") {
     request_code = Request::kInvite;
     target = param[0];
@@ -175,11 +184,11 @@ bool Client::makeRequest() {
     request_code = Request::kDeny;
   } else if (command == "TOPIC") {
     request_code = Request::kTopic;
-    if (param.size() == 2) {
-      addi = param.back();
-      param.pop_back();
-    } else if (param.size() > 0 && param[0][0] != '#') {
-      param.pop_back();
+    if (param.size() >= 2) {
+      addi = param[1];
+      param.resize(1);
+    } else if (param.size() >= 1 && param[0][0] == ':') {
+      param.resize(0);
     }
   } else if (command == "MODE") {
     request_code = Request::kMode;

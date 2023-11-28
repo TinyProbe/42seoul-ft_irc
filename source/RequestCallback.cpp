@@ -67,10 +67,11 @@ static bool targetCheck(Server &serv, std::string const &target) {
   }
 }
 
-static bool verify(Server &serv, Client const &client) {
+static bool verify(Server &serv, Client const &client, std::string const &cmd) {
   if (!client.getAuth()) { // ERR_NOTREGISTERED
     std::string msg = std::string(":") + serv.getHost() + " ";
     msg += "451 ";
+    msg += cmd + " ";
     msg += ":You have not registered\r\n";
     send_(serv, client, msg, "response: verify: ");
     return false;
@@ -98,8 +99,8 @@ static bool isClientJoined(Server &serv,
   UMstring_Channel &channel_map = serv.getChannelMap();
   UMstring_bool &joined_channel = client.getJoinedChannel();
   UMstring_Channel::iterator it = channel_map.find(channel);
-  if (it == channel_map.end()) { return false; }
-  if (!it->second.isJoined(client.getNick()) ||
+  if (it == channel_map.end() ||
+      !it->second.isJoined(client.getNick()) ||
       joined_channel.find(channel) == joined_channel.end()) {
     msg += "442 ";
     msg += channel + " ";
@@ -115,8 +116,8 @@ static bool isChannelOper(Server &serv,
                           std::string &msg) {
   UMstring_Channel &channel_map = serv.getChannelMap();
   UMstring_Channel::const_iterator it = channel_map.find(channel);
-  if (it == channel_map.end()) { return false; }
-  if (!it->second.isOperator(client.getNick())) {
+  if (it == channel_map.end() ||
+      !it->second.isOperator(client.getNick())) {
     msg += "482 ";
     msg += channel + " ";
     msg += ":You're not channel operator\r\n";
@@ -284,6 +285,7 @@ void RequestCallback::pass(Request const &req, RequestPool &requests) {
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
   } else if (client.getAuth()) { // ERR_ALREADYREGISTERED
     msg += "462 ";
+    msg += req.getCommand() + " ";
     msg += ":Unauthorized command (already registered)\r\n";
   } else {
     client.setPassword(param[0]);
@@ -301,6 +303,7 @@ void RequestCallback::nick(Request const &req, RequestPool &requests) {
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (param.size() < 1) { // ERR_NONICKNAMEGIVEN
     msg += "431 ";
+    msg += req.getCommand() + " ";
     msg += ":No nickname given\r\n";
   } else if (!nickCheck(param[0])) { // ERR_ERRONEUSNICKNAME
     msg += "432 ";
@@ -349,6 +352,7 @@ void RequestCallback::user(Request const &req, RequestPool &requests) {
   if (!errNeedMoreParam(4, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
   } else if (client.getAuth()) { // ERR_ALREADYREGISTERED
     msg += "462 ";
+    msg += req.getCommand() + " ";
     msg += ":Unauthorized command (already registered)\r\n";
   } else {
     client.setUser(param[0]);
@@ -361,7 +365,7 @@ void RequestCallback::user(Request const &req, RequestPool &requests) {
 
 void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (req.isDerived()) { // derived request
@@ -369,7 +373,7 @@ void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
     msg += req.getCommand() + " ";
     msg += req.getTarget() + " ";
     msg += param[1] + "\r\n";
-    send_(serv_, serv_.getClient(req.getTarget()), msg,
+    send_(serv_, serv_.getClient(req.getAddi()), msg,
           "response: privMsg: ");
     return;
   } else if (param.size() < 1) { // ERR_NORECIPIENT
@@ -398,18 +402,19 @@ void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
         if (client.getNick() == i->first) { continue; }
         requests.push(makeRequest(req.getRequestCode(),
                                   req.getRequesterSocket(),
-                                  i->first,
+                                  req.getTarget(),
                                   req.getCommand(),
-                                  req.getAddi(),
+                                  i->first,
                                   req.getParam(),
                                   true));
       }
     } else { // to user ...
+      if (client.getNick() == req.getTarget()) { return; }
       requests.push(makeRequest(req.getRequestCode(),
                                 req.getRequesterSocket(),
                                 req.getTarget(),
                                 req.getCommand(),
-                                req.getAddi(),
+                                req.getTarget(),
                                 req.getParam(),
                                 true));
     }
@@ -420,7 +425,7 @@ void RequestCallback::privMsg(Request const &req, RequestPool &requests) {
 
 void RequestCallback::join(Request const &req, RequestPool &requests) {
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   if (param[0] == "0") {
     // make PART
@@ -449,8 +454,8 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
     return;
   } else if (!errNeedMoreParam(1, req.getCommand(), param, msg)) {
     // ERR_NEEDMOREPARAM
-  } else if (channel.getInviteOnly() && !channel.isInvited(client.getNick())) {
-    // ERR_INVITEONLYCHAN
+  } else if (channel.getInviteOnly() &&
+      !channel.isInvited(client.getNick())) { // ERR_INVITEONLYCHAN
     msg += "473 ";
     msg += param[0] + " ";
     msg += ":Cannot join channel (+i)\r\n";
@@ -501,14 +506,16 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
                               false));
     return;
   }
-  serv_.getChannelMap().erase(param[0]);
+  if (channel.getJoinedClient().empty()) {
+    serv_.getChannelMap().erase(param[0]);
+  }
   send_(serv_, client, msg, "response: join: ");
 }
 
 void RequestCallback::names(Request const &req, RequestPool &requests) {
   (void) requests;
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   if (param.size() != 1) { return; }
   std::string msg;
@@ -540,7 +547,7 @@ void RequestCallback::names(Request const &req, RequestPool &requests) {
 void RequestCallback::part(Request const &req, RequestPool &requests) {
   (void) requests;
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
@@ -551,16 +558,16 @@ void RequestCallback::part(Request const &req, RequestPool &requests) {
     msg  = std::string(":") + client.getIdentify() + " ";
     msg += req.getCommand() + " ";
     msg += param[0] + " ";
+    if (req.getAddi() == "") {
+      msg += client.getNick() + "\r\n";
+    } else {
+      msg += req.getAddi() + "\r\n";
+    }
     UMstring_Channel &channel_map = serv_.getChannelMap();
     Channel &channel = channel_map[param[0]];
     UMstring_bool joined_client = channel.getJoinedClient();
     UMstring_bool::iterator i;
     for (i = joined_client.begin(); i != joined_client.end(); ++i) {
-      if (req.getAddi() == "") {
-        msg += client.getNick() + "\r\n";
-      } else {
-        msg += req.getAddi() + "\r\n";
-      }
       send_(serv_, serv_.getClient(i->first), msg, "response: part: ");
     }
     channel.part(client.getNick());
@@ -574,7 +581,7 @@ void RequestCallback::part(Request const &req, RequestPool &requests) {
 void RequestCallback::kick(Request const &req, RequestPool &requests) {
   (void) requests;
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(2, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
@@ -619,7 +626,7 @@ void RequestCallback::kick(Request const &req, RequestPool &requests) {
 void RequestCallback::invite(Request const &req, RequestPool &requests) {
   (void) requests;
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   Channel &channel = serv_.getChannelMap()[param[1]];
   std::string msg = std::string(":") + serv_.getHost() + " ";
@@ -649,7 +656,7 @@ void RequestCallback::invite(Request const &req, RequestPool &requests) {
 
 void RequestCallback::accept(Request const &req, RequestPool &requests) {
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
@@ -674,7 +681,7 @@ void RequestCallback::accept(Request const &req, RequestPool &requests) {
 void RequestCallback::deny(Request const &req, RequestPool &requests) {
   (void) requests;
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
@@ -690,14 +697,15 @@ void RequestCallback::deny(Request const &req, RequestPool &requests) {
 void RequestCallback::topic(Request const &req, RequestPool &requests) {
   (void) requests;
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   UMstring_Channel &channel_map = serv_.getChannelMap();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(1, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
   } else if (!isClientJoined(serv_, client, param[0], msg)) {// ERR_NOTONCHANNEL
   } else if (channel_map[param[0]].getOperTopic() &&
-      !isChannelOper(serv_, client, param[0], msg)) { // ERR_CHANOPRIVSNEEDED
+      !isChannelOper(serv_, client, param[0], msg) &&
+      req.getAddi() != "") { // ERR_CHANOPRIVSNEEDED
   } else {
     Channel &channel = channel_map[param[0]];
     if (req.getAddi() != "") { // change topic
@@ -733,7 +741,7 @@ void RequestCallback::topic(Request const &req, RequestPool &requests) {
 void RequestCallback::mode(Request const &req, RequestPool &requests) {
   (void) requests;
   Client &client = serv_.getClient(req.getRequesterSocket());
-  if (!verify(serv_, client)) { return; }
+  if (!verify(serv_, client, req.getCommand())) { return; }
   Vstring const &param = req.getParam();
   std::string msg = std::string(":") + serv_.getHost() + " ";
   if (!errNeedMoreParam(2, req.getCommand(), param, msg)) { // ERR_NEEDMOREPARAM
