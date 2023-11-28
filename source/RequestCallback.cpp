@@ -804,11 +804,17 @@ void RequestCallback::mode(Request const &req, RequestPool &requests) {
             param[1][0] == '+' ? 3 : 2, req.getCommand(), param, msg)) {
         // ERR_NEEDMOREPARAM
       } else { // RPL_CHANNELMODEIS
-        rplChannelModeIs(param, msg);
+        msg += "324 ";
+        for (int i = 0; i < (int)param.size() - 1; ++i) {
+          msg += param[i] + " ";
+        }
         channel.setHasLimit(param[1][0] == '+');
         if (param[1][0] == '+') {
-          channel.setLimit(string_to<size_t>(param[2]));
+          size_t size = string_to<size_t>(param[2]);
+          channel.setLimit(size);
+          msg += std::to_string(size) + " ";
         }
+        msg += "\r\n";
       }
     }
   }
