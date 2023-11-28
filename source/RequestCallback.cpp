@@ -760,7 +760,7 @@ void RequestCallback::mode(Request const &req, RequestPool &requests) {
     if (param[1][1] == 'o') {
       if (!errNeedMoreParam(3, req.getCommand(), param, msg)) {
         // ERR_NEEDMOREPARAM
-      } else if (serv_.getChannelMap()[param[0]].isJoined(param[2])) {
+      } else if (!serv_.getChannelMap()[param[0]].isJoined(param[2])) {
         // ERR_USERNOTINCHANNEL
         msg += "441 ";
         msg += client.getNick() + " ";

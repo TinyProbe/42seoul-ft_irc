@@ -92,8 +92,8 @@ void Server::setPort(int port) {
 }
 
 void Server::setPassword(std::string const &password) {
-  if (password.size() < 6 || password.size() > 16) {
-    throw std::runtime_error("password: 6 <= password <= 16");
+  if (password.size() < 4 || password.size() > 20) {
+    throw std::runtime_error("password: 4 <= password <= 20");
   }
   for (int i = 0; i < (int)password.size(); ++i) {
     if (!isprint(password[i])) {

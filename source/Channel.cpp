@@ -64,17 +64,7 @@ size_t Channel::getLimit() const { return limit_; }
 
 void Channel::setTopic(std::string const &topic) { topic_ = topic; }
 
-void Channel::setPassword(std::string const &password) {
-  if (password.size() < 6 || password.size() > 16) {
-    throw std::runtime_error("password: 6 <= password <= 16");
-  }
-  for (int i = 0; i < (int)password.size(); ++i) {
-    if (!isprint(password[i])) {
-      throw std::runtime_error("password: format error(unprintable)");
-    }
-  }
-  password_ = password;
-}
+void Channel::setPassword(std::string const &password) { password_ = password; }
 
 void Channel::setLimit(size_t limit) { limit_ = limit; }
 
