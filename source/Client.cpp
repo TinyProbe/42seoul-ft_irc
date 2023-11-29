@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: migo <migo@student.42seoul.kr>             +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/29 22:17:31 by migo              #+#    #+#             */
+/*   Updated: 2023/11/29 22:17:31 by migo             ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "Client.h"
 
 #include <iostream>
@@ -55,7 +67,7 @@ static bool parse(std::string &buffer,
     }
     param.push_back(word);
   }
-  return true;
+  return command != "";
 }
 
 bool Client::getAuth() const { return auth_; }
@@ -126,7 +138,6 @@ bool Client::isJoined(std::string const &channel) const {
 bool Client::receive() {
   static char buf[kMaxBuffer + 1];
   static int len;
-  buffer_.clear();
   while (true) {
     len = recv(sock_, buf, kMaxBuffer, MSG_DONTWAIT/*  | MSG_NOSIGNAL */);
     if (len == -1 && errno != EAGAIN) {
@@ -195,11 +206,19 @@ bool Client::makeRequest() {
     if (param.size() >= 2) {
       addi = param[1];
       param.resize(1);
-    } else if (param.size() >= 1 && param[0][0] == ':') {
+    } else if (param.size() >= 1 && param[0] == ":") {
       param.resize(0);
     }
   } else if (command == "MODE") {
     request_code = Request::kMode;
+  } else if (command == "PONG") {
+    request_code = Request::kPong;
+  } else if (command == "QUIT") {
+    request_code = Request::kQuit;
+    if (param.size() >= 1) {
+      if (param[0] != ":") { addi = param[0]; }
+      param.resize(0);
+    }
   } else {
     request_code = Request::kUnknown;
   }

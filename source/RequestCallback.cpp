@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   RequestCallback.cpp                                :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tkong <tkong@student.42seoul.kr>           +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/29 22:17:02 by tkong             #+#    #+#             */
+/*   Updated: 2023/11/29 22:17:02 by tkong            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "RequestCallback.h"
 
 #include <iostream>
@@ -69,8 +81,8 @@ static bool targetCheck(Server &serv, std::string const &target) {
     UMstring_Channel &channel_map = serv.getChannelMap();
     return channel_map.find(target) != channel_map.end();
   } else {
-    UMint_Client &connection = serv.getConnection();
-    return connection.find(serv.getNickToSock()[target]) != connection.end();
+    UMstring_int &nick_to_sock = serv.getNickToSock();
+    return nick_to_sock.find(target) != nick_to_sock.end();
   }
 }
 
@@ -269,7 +281,21 @@ void RequestCallback::operator()(Request const &req, RequestPool &requests) {
       std::cout << "mode()" << std::endl;
 #endif
       mode(req, requests);
+    } else if (code == Request::kPong) {
+#ifdef _DEBUG_
+      std::cout << "just ignore pong" << std::endl;
+#endif
+    } else if (code == Request::kQuit) {
+#ifdef _DEBUG_
+      std::cout << "quit()" << std::endl;
+#endif
+      quit(req, requests);
     }
+  } else {
+#ifdef _DEBUG_
+    std::cout << "doesn't exist client: " <<
+                 req.getRequesterSocket() << std::endl;
+#endif
   }
 }
 
@@ -467,7 +493,8 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
     msg += param[0] + " ";
     msg += ":Cannot join channel (+i)\r\n";
   } else if (channel.getHasPassword() &&
-      (param.size() < 2 || !channel.verify(param[1]))) { // ERR_BADCHANNELKEY
+      (param.size() < 2 || !channel.verify(param[1])) &&
+      !channel.isInvited(client.getNick())) { // ERR_BADCHANNELKEY
     msg += "475 ";
     msg += param[0] + " ";
     msg += ":Cannot join channel (+k)\r\n";
@@ -479,6 +506,7 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
     msg += ":Cannot join channel (+l)\r\n";
   } else if ((int)client.getJoinedChannel().size() >= Client::kMaxChannel) {
     // ERR_TOOMANYCHANNELS
+    msg += "405 ";
     msg += param[0] + " ";
     msg += ":You have joined too many channels\r\n";
   } else {
@@ -501,6 +529,14 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
                                 req.getParam(),
                                 true));
     }
+    // make TOPIC
+    requests.push(makeRequest(Request::kTopic,
+                              req.getRequesterSocket(),
+                              req.getTarget(),
+                              "TOPIC",
+                              req.getAddi(),
+                              req.getParam(),
+                              false));
     // make NAMES
     Vstring param2;
     param2.push_back(param[0]);
@@ -826,6 +862,18 @@ void RequestCallback::mode(Request const &req, RequestPool &requests) {
     }
   }
   send_(serv_, client, msg, "response: mode: ");
+}
+
+void RequestCallback::quit(Request const &req, RequestPool &requests) {
+  (void) requests;
+  Client &client = serv_.getClient(req.getRequesterSocket());
+  if (!verify(serv_, client, req.getCommand())) { return; }
+  // Vstring const &param = req.getParam();
+  std::string msg = std::string(":") + client.getIdentify() + " ";
+  msg += req.getCommand() + " ";
+  msg += req.getAddi() + "\r\n";
+  send_(serv_, client, msg, "response: quit: ");
+  serv_.disconnect(client.getSocket());
 }
 
 } // namespace irc

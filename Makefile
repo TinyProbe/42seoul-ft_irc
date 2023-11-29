@@ -1,14 +1,26 @@
-##########################################################
-# Reference : https://greenfishblog.tistory.com/150
-##########################################################
-#
-# make all
-# make [debug | release]
-# make clean [debug | release]
-# make fclean [debug | release]
-# make re
-#
-##########################################################
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: tkong <tkong@student.42seoul.kr>           +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/11/29 22:13:29 by tkong             #+#    #+#              #
+#    Updated: 2023/11/29 22:13:29 by tkong            ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+# ******************************************************** #
+# Reference : https://greenfishblog.tistory.com/150        #
+# ******************************************************** #
+#                                                          #
+# make all                                                 #
+# make [debug | release]                                   #
+# make clean [debug | release]                             #
+# make fclean [debug | release]                            #
+# make re                                                  #
+#                                                          #
+# ******************************************************** #
 
 ##################################
 # 빌드의 기본값은 debug이다.
@@ -42,7 +54,7 @@ ifeq ($(ARG.RELEASE),1)
   # release에 특화된 설정을 한다.
   CXXFLAGS += -O2 -D_RELEASE_
   CONFIG    = release
-else ifeq ($(ARG.DEBUG),1)
+else
   # debug에 특화된 설정을 한다.
   CXXFLAGS += -g3 -D_DEBUG_
   CONFIG    = debug

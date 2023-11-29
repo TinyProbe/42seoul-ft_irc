@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tkong <tkong@student.42seoul.kr>           +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/29 22:17:06 by tkong             #+#    #+#             */
+/*   Updated: 2023/11/29 22:17:06 by tkong            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "Server.h"
 
 #include <netdb.h>
@@ -181,28 +193,28 @@ int Server::accept() {
 void Server::disconnect(int sock) {
   UMint_Client::iterator it = connection_.find(sock);
   if (it != connection_.end()) {
-    close(it->first);
-    nick_to_sock_.erase(it->second.getNick());
-    connection_.erase(it);
-
     UMstring_Channel::iterator i;
     for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
       i->second.part(it->second.getNick());
     }
+
+    close(it->first);
+    nick_to_sock_.erase(it->second.getNick());
+    connection_.erase(it);
   }
 }
 
 void Server::disconnect(std::string const &nick) {
   UMstring_int::iterator it = nick_to_sock_.find(nick);
   if (it != nick_to_sock_.end()) {
-    close(it->second);
-    connection_.erase(it->second);
-    nick_to_sock_.erase(it);
-
     UMstring_Channel::iterator i;
     for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
       i->second.part(nick);
     }
+
+    close(it->second);
+    connection_.erase(it->second);
+    nick_to_sock_.erase(it);
   }
 }
 
