@@ -1,3 +1,11 @@
+#include "Server.h"
+
+#include <netdb.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <iostream>
+
 #include "common.h"
 
 namespace irc {

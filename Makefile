@@ -95,6 +95,7 @@ INC_LST = \
 # source/...
 SRC_LST = \
 					main.cpp \
+					common.cpp \
 					Program.cpp \
 					Server.cpp \
 					Client.cpp \

@@ -1,3 +1,5 @@
+#include "RequestPool.h"
+
 #include "common.h"
 
 namespace irc {

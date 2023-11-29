@@ -1,3 +1,5 @@
+#include "EventPool.h"
+
 #include "common.h"
 
 namespace irc {

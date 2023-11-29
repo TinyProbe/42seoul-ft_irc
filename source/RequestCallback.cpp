@@ -1,4 +1,11 @@
+#include "RequestCallback.h"
+
+#include <iostream>
+
 #include "common.h"
+#include "Server.h"
+#include "Client.h"
+#include "RequestPool.h"
 
 namespace irc {
 
@@ -635,7 +642,7 @@ void RequestCallback::invite(Request const &req, RequestPool &requests) {
     msg += "401 ";
     msg += param[0] + " ";
     msg += ":No such nick/channel\r\n";
-  } else if (!isClientJoined(serv_, client, param[1], msg)) { // ERR_NOTONCHANNEL
+  } else if (!isClientJoined(serv_, client, param[1], msg)) {// ERR_NOTONCHANNEL
   } else if (channel.isJoined(param[0]) && client.isJoined(param[1])) {
     // ERR_USERONCHANNEL
     msg += "443 ";

@@ -1,3 +1,7 @@
+#include "Program.h"
+
+#include <iostream>
+
 #include "common.h"
 
 namespace irc {
@@ -17,6 +21,8 @@ void Program::init(char **argv) {
 
   events_.changeEvent(serv_.getSocket(), EVFILT_READ, EV_ADD);
   events_.setCapacity(5);
+
+  signal(SIGPIPE, sigpipe);
 }
 
 void Program::loop() {

@@ -1,3 +1,8 @@
+#include "Client.h"
+
+#include <iostream>
+#include <sstream>
+
 #include "common.h"
 
 namespace irc {
@@ -178,6 +183,9 @@ bool Client::makeRequest() {
   } else if (command == "INVITE") {
     request_code = Request::kInvite;
     target = param[0];
+    if (param[1][0] == ':') {
+      param[1] = param[1].substr(1, param[1].find(' ') - 1);
+    }
   } else if (command == "ACCEPT") {
     request_code = Request::kAccept;
   } else if (command == "DENY") {

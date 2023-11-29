@@ -1,3 +1,5 @@
+#include "Channel.h"
+
 #include "common.h"
 
 namespace irc {
