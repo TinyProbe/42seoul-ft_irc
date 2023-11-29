@@ -24,7 +24,7 @@ static void send_(Server &serv,
   if (send(client.getSocket(),
            msg.c_str(),
            msg.size(),
-           MSG_DONTWAIT | MSG_NOSIGNAL) == -1) {
+           MSG_DONTWAIT/*  | MSG_NOSIGNAL */) == -1) {
     if (errno == EAGAIN) {
       throw std::runtime_error("blocked send");
     } else {

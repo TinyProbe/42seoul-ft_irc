@@ -128,7 +128,7 @@ bool Client::receive() {
   static int len;
   buffer_.clear();
   while (true) {
-    len = recv(sock_, buf, kMaxBuffer, MSG_DONTWAIT | MSG_NOSIGNAL);
+    len = recv(sock_, buf, kMaxBuffer, MSG_DONTWAIT/*  | MSG_NOSIGNAL */);
     if (len == -1 && errno != EAGAIN) {
       std::cerr << std::string("recv: ") +
                    std::string(strerror(errno)) << std::endl;
