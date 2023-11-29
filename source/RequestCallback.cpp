@@ -679,7 +679,7 @@ void RequestCallback::accept(Request const &req, RequestPool &requests) {
                               "JOIN",
                               req.getAddi(),
                               param2,
-                              true));
+                              false));
     return;
   }
   send_(serv_, client, msg, "response: accept: ");
