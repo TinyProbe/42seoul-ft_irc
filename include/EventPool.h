@@ -2,6 +2,7 @@
 #define IRCSERV_EVENTPOOL_H_
 
 #include <sys/event.h>
+#include <sys/errno.h>
 
 #include <vector>
 #include <string>

@@ -1,8 +1,10 @@
 #ifndef IRCSERV_CLIENT_H_
 #define IRCSERV_CLIENT_H_
 
-#include <string>
 #include <netinet/in.h>
+
+#include <string>
+#include <unordered_map>
 
 #include "Request.h"
 
