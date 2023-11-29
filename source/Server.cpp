@@ -156,9 +156,8 @@ void Server::preProcess() {
 int Server::accept() {
   int client_sock;
   struct sockaddr_in client_addr;
-  socklen_t client_len;
+  socklen_t client_len = sizeof(struct sockaddr_in);
   bzero(&client_addr, sizeof(struct sockaddr_in));
-  bzero(&client_len, sizeof(socklen_t));
 
   if ((client_sock = ::accept(sock_,
                               (struct sockaddr *) &client_addr,
@@ -172,13 +171,6 @@ int Server::accept() {
     }
   }
   fcntl(client_sock, F_SETFL, O_NONBLOCK);
-
-  if (getsockname(client_sock,
-                  (struct sockaddr *) &client_addr,
-                  &client_len) == -1) {
-    throw std::runtime_error(std::string("getsockname: ") +
-                             std::string(strerror(errno)));
-  }
 
   Client &client = connection_[client_sock];
   client.setSocket(client_sock);
