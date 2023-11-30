@@ -40,11 +40,11 @@ static Request makeRequest_(int request_code,
   return req;
 }
 
-static bool parse(std::string &buffer,
-                  std::string &command,
-                  Vstring &param) {
+static int parse(std::string &buffer,
+                 std::string &command,
+                 Vstring &param) {
   size_t p = buffer.find("\r\n");
-  if (p == std::string::npos) { return false; }
+  if (p == std::string::npos) { return -1; }
   std::string msg = buffer.substr(0, p);
   p += 2;
   buffer = buffer.substr(p, buffer.size() - p);
@@ -58,6 +58,7 @@ static bool parse(std::string &buffer,
   ss << msg;
   ss >> word;
   command = word;
+  if (command == "") { return -2; }
   while (ss >> word) {
     if (word[0] == ':') {
       size_t p2 = msg.find(':');
@@ -67,7 +68,7 @@ static bool parse(std::string &buffer,
     }
     param.push_back(word);
   }
-  return command != "";
+  return 0;
 }
 
 bool Client::getAuth() const { return auth_; }
@@ -158,7 +159,9 @@ bool Client::makeRequest() {
   std::string target;
   std::string addi;
   Vstring param;
-  if (!parse(buffer_, command, param)) { return false; }
+  while (int tmp = parse(buffer_, command, param)) {
+    if (tmp == -1) { return false; }
+  }
   if (command == "PASS") {
     request_code = Request::kPass;
   } else if (command == "NICK") {
