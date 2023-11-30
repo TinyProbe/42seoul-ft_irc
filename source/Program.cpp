@@ -74,18 +74,17 @@ void Program::request(struct kevent const &ev) {
       events_.setCapacity(serv_.getConnection().size() * 2 + 5);
     }
   } else { // client
-    Client &client = serv_.getClient(ev.ident);
+    UMint_Client &connection = serv_.getConnection();
+    UMint_Client::iterator it = connection.find(ev.ident);
+    if (it == connection.end()) { return; }
+    Client &client = it->second;
     if (ev.filter == EVFILT_READ) {
       if (client.receive()) {
-        while (client.makeRequest()) {
-          requests_.push(client.getRequest());
-        }
-      } else {
-        serv_.disconnect(client.getSocket());
+        while (client.makeRequest()) { requests_.push(client.getRequest()); }
       }
-    } else if (ev.filter == EVFILT_WRITE) {
-      client.setWrite(true);
+      else { serv_.disconnect(client.getSocket()); }
     }
+    else if (ev.filter == EVFILT_WRITE) { client.setWrite(true); }
   }
 }
 

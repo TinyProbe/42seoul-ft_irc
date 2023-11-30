@@ -194,8 +194,13 @@ void Server::disconnect(int sock) {
   UMint_Client::iterator it = connection_.find(sock);
   if (it != connection_.end()) {
     UMstring_Channel::iterator i;
-    for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
+    for (i = channel_map_.begin(); i != channel_map_.end(); ) {
       i->second.part(it->second.getNick());
+      if (i->second.getJoinedClient().empty()) {
+        i = channel_map_.erase(i);
+      } else {
+        ++i;
+      }
     }
 
     close(it->first);
@@ -208,8 +213,13 @@ void Server::disconnect(std::string const &nick) {
   UMstring_int::iterator it = nick_to_sock_.find(nick);
   if (it != nick_to_sock_.end()) {
     UMstring_Channel::iterator i;
-    for (i = channel_map_.begin(); i != channel_map_.end(); ++i) {
+    for (i = channel_map_.begin(); i != channel_map_.end(); ) {
       i->second.part(nick);
+      if (i->second.getJoinedClient().empty()) {
+        i = channel_map_.erase(i);
+      } else {
+        ++i;
+      }
     }
 
     close(it->second);

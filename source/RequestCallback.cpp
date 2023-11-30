@@ -283,7 +283,7 @@ void RequestCallback::operator()(Request const &req, RequestPool &requests) {
       mode(req, requests);
     } else if (code == Request::kPong) {
 #ifdef _DEBUG_
-      std::cout << "just ignore pong" << std::endl;
+      std::cout << "just ignore pong\n" << std::endl;
 #endif
     } else if (code == Request::kQuit) {
 #ifdef _DEBUG_
