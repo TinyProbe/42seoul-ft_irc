@@ -19,8 +19,8 @@
 
 namespace irc {
 
-int const Client::kMaxChannel = 50;
-static int const kMaxBuffer = (1 << 20);
+int const Client::kMaxChannel = 10;
+static int const kMaxBuffer = (1 << 12);
 
 static Request makeRequest_(int request_code,
                             int requester_sock,

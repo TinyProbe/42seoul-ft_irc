@@ -76,7 +76,15 @@ static bool nickCheck(std::string const &nick) {
   return true;
 }
 
-static bool targetCheck(Server &serv, std::string const &target) {
+static bool channelName(std::string const &channel) {
+  if (channel.size() < 1 || channel.size() > 200 || channel[0] != '#') {
+    return false;
+  }
+  return true;
+}
+
+static bool targetCheck(Server &serv,
+                        std::string const &target) {
   if (target[0] == '#') {
     UMstring_Channel &channel_map = serv.getChannelMap();
     return channel_map.find(target) != channel_map.end();
@@ -86,7 +94,9 @@ static bool targetCheck(Server &serv, std::string const &target) {
   }
 }
 
-static bool verify(Server &serv, Client const &client, std::string const &cmd) {
+static bool verify(Server &serv,
+                   Client const &client,
+                   std::string const &cmd) {
   if (!client.getAuth()) { // ERR_NOTREGISTERED
     std::string msg = std::string(":") + serv.getHost() + " ";
     msg += "451 ";
@@ -504,6 +514,10 @@ void RequestCallback::join(Request const &req, RequestPool &requests) {
     msg += "471 ";
     msg += param[0] + " ";
     msg += ":Cannot join channel (+l)\r\n";
+  } else if (!channelName(param[0])) { // ERR_NOSUCHCHANNEL
+    msg += "403 ";
+    msg += param[0] + " ";
+    msg += ":No such channel\r\n";
   } else if ((int)client.getJoinedChannel().size() >= Client::kMaxChannel) {
     // ERR_TOOMANYCHANNELS
     msg += "405 ";
@@ -762,7 +776,7 @@ void RequestCallback::topic(Request const &req, RequestPool &requests) {
         send_(serv_, serv_.getClient(i->first), msg, "response: topic: ");
       }
       std::string const &addi = req.getAddi();
-      if (addi == "\"\"") {
+      if (addi.empty() || addi == "\"\"") {
         channel.setTopic("");
       } else {
         channel.setTopic(addi);
